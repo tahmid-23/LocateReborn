@@ -93,3 +93,14 @@ tasks.named<JavaExec>("run") {
 
     workingDir = File("/run")
 }
+
+val cleanDistribution = tasks.register<Delete>("cleanDistribution") {
+    delete(
+        File(projectDir, "$/build/distributions/LocateReborn-1.0-SNAPSHOT.tar"),
+        File(projectDir, "$/build/distributions/LocateReborn-1.0-SNAPSHOT.zip")
+    )
+}
+
+tasks.named<Jar>("jvmJar") {
+    dependsOn(cleanDistribution)
+}

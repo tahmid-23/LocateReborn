@@ -62,7 +62,7 @@ fun main() {
         .setAudience(listOf(clientId))
         .build()
 
-    val authRouteCreator = GoogleAuthRouteCreator(tokenVerifier)
+    val authRouteCreator = GoogleAuthRouteCreator(db, tokenVerifier)
 
     embeddedServer(Netty, System.getenv("PORT")?.toIntOrNull() ?: 80, "127.0.0.1") {
         install(CallLogging)

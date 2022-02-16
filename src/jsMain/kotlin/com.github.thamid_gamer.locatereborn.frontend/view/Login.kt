@@ -106,7 +106,7 @@ fun ChildrenBuilder.loginRoute() {
                 val idConfig = Any().asDynamic()
                 idConfig.client_id = clientId
                 idConfig.ux_mode = "redirect"
-                idConfig.login_uri = "$loginUriPrefix/google-login"
+                idConfig.login_uri = "$loginUriPrefix/google-auth"
                 google.accounts.id.initialize(idConfig)
 
                 val buttonConfig = Any().asDynamic()
