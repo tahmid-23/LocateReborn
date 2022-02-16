@@ -1,0 +1,57 @@
+.container {
+    margin-top: 10vh;
+}
+
+.centered-section {
+    display: flex;
+    justify-content: center;
+    margin-top: 2vh;
+    margin-bottom: 2vh;
+    gap: 3%;
+}
+
+.centered-column {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+#locate-header {
+    height: 8vw;
+    align-items: baseline;
+}
+
+#locate-header-logo {
+    max-height: 100%;
+    align-self: center;
+}
+
+.header-text {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+#locate-header-title {
+    font-size: 8vw;
+    line-height: 1;
+}
+
+#locate-header-version {
+    font-size: 3vw;
+}
+
+.locate-message {
+    font-size: 2vw;
+}
+
+.centered-text {
+    text-align: center;
+}
+
+#sign-in-with-google-button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 4vh;
+    width: 222px;
+}

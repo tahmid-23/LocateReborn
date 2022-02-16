@@ -1,0 +1,28 @@
+html {
+    font-family: Calibri, Arial, Helvetica, sans-serif;
+}
+
+h1 {
+    margin: 0;
+}
+
+.error-message {
+    color: red;
+}
+
+.aligned-row {
+    display: flex;
+    align-items: center;
+}
+
+.horizontally-spaced-row > * {
+    margin: 0 0.25vw;
+}
+
+.horizontally-spaced-row > *:first-of-type {
+    margin-left: 0;
+}
+
+.horizontally-spaced-row > *:last-child {
+    margin-right: 0;
+}

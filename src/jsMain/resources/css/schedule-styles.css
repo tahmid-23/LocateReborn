@@ -1,0 +1,84 @@
+table {
+    border-collapse: collapse;
+}
+
+td, th {
+    border: 1px solid black;
+    padding: 0.25em;
+}
+
+.math {
+    background-color: peru;
+}
+
+.english {
+    background-color: lightcoral;
+}
+
+.history {
+    background-color: darkseagreen;
+}
+
+.gym {
+    background-color: thistle;
+}
+
+.language {
+    background-color: mediumorchid;
+}
+
+.lunch {
+    background-color: goldenrod;
+}
+
+.physics {
+    background-color: orange;
+}
+
+.biology {
+    background-color: springgreen;
+}
+
+.chem {
+    background-color: steelblue;
+}
+
+.cs {
+    background-color: silver;
+}
+
+.engineering {
+    background-color: darkkhaki;
+}
+
+.culinary {
+    background-color: sandybrown;
+}
+
+.medical {
+    background-color: pink;
+}
+
+.art {
+    background-color: plum;
+}
+
+.business {
+    background-color: yellow;
+}
+
+.special {
+    background-color: aquamarine;
+}
+
+.lab {
+    background-color: firebrick;
+}
+
+.igs {
+    background-color: olive;
+}
+
+.elective {
+    background-color: mediumturquoise;
+}
