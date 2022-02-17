@@ -35,7 +35,7 @@ class ManualCourseTypeClassifier : CourseTypeClassifier {
             "sustainable", "leadership", "ptf-mml"))
     }
 
-    override fun classify(simpleCourseName: String): CourseType? {
+    override fun classify(simpleCourseName: String): CourseType {
         val lowercase = simpleCourseName.lowercase()
         for (keywordCandidate in keywordMap) {
             if (keywordCandidate.value.any { it in lowercase }) {
@@ -43,7 +43,7 @@ class ManualCourseTypeClassifier : CourseTypeClassifier {
             }
         }
 
-        return null
+        return CourseType.UNKNOWN
     }
 
 }

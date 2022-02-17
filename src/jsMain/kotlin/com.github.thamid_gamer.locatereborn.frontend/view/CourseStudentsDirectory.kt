@@ -133,10 +133,10 @@ fun ChildrenBuilder.courseStudentsDirectoryRoute(client: HttpClient, scope: Coro
             val simpleCourseName = searchParams.get("simpleCourseName") ?: "Unknown Course"
             val courseTypeParam = searchParams.get("courseType")
             val courseType = if (courseTypeParam != null) {
-                CourseType.courseTypeMap[courseTypeParam]
+                CourseType.courseTypeMap[courseTypeParam] ?: CourseType.UNKNOWN
             }
             else {
-                null
+                CourseType.UNKNOWN
             }
 
             val periodData = PeriodData(

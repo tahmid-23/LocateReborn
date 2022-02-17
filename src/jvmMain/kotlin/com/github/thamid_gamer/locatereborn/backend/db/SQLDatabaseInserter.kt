@@ -29,6 +29,7 @@ class SQLDatabaseInserter(private val db: Database,
                         it[firstName] = student.value.firstName
                         it[lastName] = student.value.lastName
                         it[isTeacher] = student.value.isTeacher
+                        it[studentType] = student.value.studentType.name
                     }
                 }
 
@@ -39,7 +40,7 @@ class SQLDatabaseInserter(private val db: Database,
                             it[schoologyCourseId] = studentPeriod.schoologyCourseId
                             it[fullCourseName] = studentPeriod.fullCourseName
                             it[simpleCourseName] = studentPeriod.simpleCourseName
-                            it[courseType] = studentPeriod.courseType?.name
+                            it[courseType] = studentPeriod.courseType.name
                             it[day] = studentPeriod.day
                             it[period] = studentPeriod.period
                         }

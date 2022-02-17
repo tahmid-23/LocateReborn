@@ -1,6 +1,7 @@
 package com.github.thamid_gamer.locatereborn.backend.datagen.generator
 
 import com.github.thamid_gamer.locatereborn.backend.datagen.classifier.CourseTypeClassifier
+import com.github.thamid_gamer.locatereborn.backend.datagen.classifier.StudentTypeClassifier
 import com.github.thamid_gamer.locatereborn.backend.datagen.exception.LocateDataGenerationException
 import com.github.thamid_gamer.locatereborn.shared.api.data.CourseType
 import com.github.thamid_gamer.locatereborn.shared.api.data.PeriodData
@@ -16,6 +17,7 @@ import org.jsoup.nodes.Element
 import kotlin.math.ceil
 
 class ScraperDataGenerator(private val client: HttpClient,
+                           private val studentTypeClassifier: StudentTypeClassifier,
                            private val courseTypeClassifier: CourseTypeClassifier) : LocateDataGenerator {
 
     companion object {
@@ -158,7 +160,8 @@ class ScraperDataGenerator(private val client: HttpClient,
             }
         }
 
-        studentMap[studentId] = StudentData(firstName, lastName, isTeacher)
+        val studentType = studentTypeClassifier.classify(isTeacher, created)
+        studentMap[studentId] = StudentData(firstName, lastName, isTeacher, studentType)
     }
 
     private fun getStudentCoursesURL(studentId: String) = "$BCA_HOST/user/$studentId/courses/list"
@@ -190,7 +193,7 @@ class ScraperDataGenerator(private val client: HttpClient,
         schoologyCourseId: String,
         fullCourseName: String,
         simpleCourseName: String,
-        courseType: CourseType?,
+        courseType: CourseType,
     ): Iterable<PeriodData> {
         if (time.groups.size != 3) {
             return emptyList()
@@ -227,7 +230,7 @@ class ScraperDataGenerator(private val client: HttpClient,
         schoologyCourseId: String,
         fullCourseName: String,
         simpleCourseName: String,
-        courseType: CourseType?,
+        courseType: CourseType,
         period: Int
     ): PeriodData? {
         val dayIndex = DAYS_RANGE.indexOf(day.value[0])
@@ -250,7 +253,7 @@ class ScraperDataGenerator(private val client: HttpClient,
         schoologyCourseId: String,
         fullCourseName: String,
         simpleCourseName: String,
-        courseType: CourseType?,
+        courseType: CourseType,
         period: Int
     ): Iterable<PeriodData> {
         val startDayIndex = DAYS_RANGE.indexOf(day.value[0])

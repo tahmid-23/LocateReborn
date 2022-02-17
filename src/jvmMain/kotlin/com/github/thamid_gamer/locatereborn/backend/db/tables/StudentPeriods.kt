@@ -8,7 +8,7 @@ object StudentPeriods : Table() {
     val schoologyCourseId = varchar("schoology_course_id", 10)
     val fullCourseName = varchar("full_course_name", 150)
     val simpleCourseName = varchar("simple_course_name", 100)
-    val courseType = varchar("course_type", 20).nullable()
+    val courseType = varchar("course_type", 20)
     val day = integer("day")
     val period = integer("period")
 

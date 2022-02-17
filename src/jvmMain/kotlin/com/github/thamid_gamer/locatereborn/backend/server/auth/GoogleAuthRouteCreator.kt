@@ -65,9 +65,12 @@ class GoogleAuthRouteCreator(
 
                     val present = Users.select(Users.username eq username).toList().isNotEmpty()
                     if (present) {
+                        // NO-OP: just for future if Users becomes a larger table
+                        /*
                         Users.update({ Users.username eq username }) {
-                            // NO-OP: just for future if Users becomes a larger table
+
                         }
+                         */
                     }
                     else {
                         Users.insert {

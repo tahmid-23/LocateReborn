@@ -7,6 +7,7 @@ object Students : Table() {
     val firstName = varchar("first_name", 30)
     val lastName = varchar("last_name", 70)
     val isTeacher = bool("is_teacher")
+    val studentType = varchar("student_type", 9)
 
     override val primaryKey = PrimaryKey(studentId, name = "PK_STUDENT_ID")
 }

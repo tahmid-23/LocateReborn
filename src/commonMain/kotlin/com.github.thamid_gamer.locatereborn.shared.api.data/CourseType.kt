@@ -19,14 +19,13 @@ enum class CourseType {
     SPECIAL,
     LAB,
     IGS,
-    ELECTIVE;
+    ELECTIVE,
+    UNKNOWN;
 
     companion object {
 
-        val courseTypeMap = buildMap {
-            for (courseType in values()) {
-                put(courseType.name, courseType)
-            }
+        val courseTypeMap = values().associateBy {
+            it.name
         }
 
     }

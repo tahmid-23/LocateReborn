@@ -24,9 +24,10 @@ class BasicCourseTypeColorizer : CourseTypeColorizer {
         put(CourseType.LAB, "lab")
         put(CourseType.IGS, "igs")
         put(CourseType.ELECTIVE, "elective")
+        put(CourseType.UNKNOWN, "unknown")
     }
 
-    override fun colorize(courseType: CourseType?): String {
+    override fun colorize(courseType: CourseType): String {
         return colorMap[courseType] ?: colorMap[CourseType.ELECTIVE]!!
     }
 

@@ -3,6 +3,7 @@ package com.github.thamid_gamer.locatereborn.frontend.view
 import com.github.thamid_gamer.locatereborn.frontend.helmet.helmet
 import com.github.thamid_gamer.locatereborn.frontend.view.FilterOrder.Companion.defaultOrder
 import com.github.thamid_gamer.locatereborn.shared.api.data.StudentData
+import com.github.thamid_gamer.locatereborn.shared.api.data.StudentType
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
@@ -49,12 +50,23 @@ private enum class FilterOrder {
 
 }
 
+const val filterAny = "any"
+const val filterAnyDisplay = "Any"
+
 val studentDirectory = FC<StudentDirectoryProps> { props ->
     var prefix by useState("")
     var filterOrder by useState(FilterOrder.filterOrderMap[defaultOrder]!!)
     var sortDescending by useState(false)
+    var gradeFilter by useState<StudentType?>(null)
 
-    val studentsCopy = props.students.entries
+    val studentsCopy = props.students.entries.toMutableList()
+
+    if (gradeFilter != null) {
+        studentsCopy.removeAll {
+            it.value.studentType != gradeFilter
+        }
+    }
+
     val sortedStudentsCopy = when (filterOrder) {
         FilterOrder.FIRST -> studentsCopy.sortedBy(sortDescending) {
             it.value.firstName
@@ -125,8 +137,8 @@ val studentDirectory = FC<StudentDirectoryProps> { props ->
                 id = "filter-order"
                 name = "Filter Order"
                 option {
-                    value = "any"
-                    +"Any"
+                    value = filterAny
+                    +filterAnyDisplay
                 }
                 option {
                     value = "first"
@@ -154,6 +166,49 @@ val studentDirectory = FC<StudentDirectoryProps> { props ->
                 name = "Sort Descending"
                 onChange = {
                     sortDescending = it.currentTarget.checked
+                }
+            }
+        }
+        span {
+            className = "aligned-row"
+            label {
+                htmlFor = "grade-filter"
+                +"Grade: "
+            }
+            select {
+                id = "grade-filter"
+                name = "Grade Filter"
+                option {
+                    value = filterAny
+                    +filterAnyDisplay
+                }
+                option {
+                    value = StudentType.FRESHMAN.name
+                    +"Freshman"
+                }
+                option {
+                    value = StudentType.SOPHOMORE.name
+                    +"Sophomore"
+                }
+                option {
+                    value = StudentType.JUNIOR.name
+                    +"Junior"
+                }
+                option {
+                    value = StudentType.SENIOR.name
+                    +"Senior"
+                }
+                option {
+                    value = StudentType.STAFF.name
+                    +"Staff"
+                }
+                onChange = {
+                    val gradeName = it.currentTarget.value
+                    gradeFilter = if (gradeName == filterAny) {
+                        null
+                    } else {
+                        StudentType.studentTypeMap[gradeName]
+                    }
                 }
             }
         }

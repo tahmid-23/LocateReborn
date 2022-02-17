@@ -6,6 +6,7 @@ import com.github.thamid_gamer.locatereborn.backend.server.session.LocateSession
 import com.github.thamid_gamer.locatereborn.shared.api.data.CourseType
 import com.github.thamid_gamer.locatereborn.shared.api.data.PeriodData
 import com.github.thamid_gamer.locatereborn.shared.api.data.StudentData
+import com.github.thamid_gamer.locatereborn.shared.api.data.StudentType
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
@@ -32,7 +33,12 @@ fun Route.studentListRoute(db: Database) {
             val response = Students
                 .selectAll()
                 .associateBy({ it[Students.studentId] }) {
-                    StudentData(it[Students.firstName], it[Students.lastName], it[Students.isTeacher])
+                    StudentData(
+                        it[Students.firstName],
+                        it[Students.lastName],
+                        it[Students.isTeacher],
+                        StudentType.studentTypeMap[it[Students.studentType]] ?: StudentType.UNKNOWN
+                    )
                 }
 
             call.respond(response)
@@ -60,7 +66,12 @@ fun Route.studentInfoRoute(db: Database) {
                 .slice(Students.columns - Students.studentId)
                 .select(Students.studentId eq id)
                 .map {
-                    StudentData(it[Students.firstName], it[Students.lastName], it[Students.isTeacher])
+                    StudentData(
+                        it[Students.firstName],
+                        it[Students.lastName],
+                        it[Students.isTeacher],
+                        StudentType.studentTypeMap[it[Students.studentType]] ?: StudentType.UNKNOWN
+                    )
                 }
 
             if (response.size > 1) {
@@ -96,7 +107,7 @@ fun Route.studentCoursesRoute(db: Database) {
                         it[StudentPeriods.schoologyCourseId],
                         it[StudentPeriods.fullCourseName],
                         it[StudentPeriods.simpleCourseName],
-                        CourseType.courseTypeMap[it[StudentPeriods.courseType]],
+                        CourseType.courseTypeMap[it[StudentPeriods.courseType]] ?: CourseType.UNKNOWN,
                         it[StudentPeriods.day],
                         it[StudentPeriods.period]
                     )
@@ -126,7 +137,7 @@ fun Route.courseListRoute(db: Database) {
                         it[StudentPeriods.schoologyCourseId],
                         it[StudentPeriods.fullCourseName],
                         it[StudentPeriods.simpleCourseName],
-                        CourseType.courseTypeMap[it[StudentPeriods.courseType]],
+                        CourseType.courseTypeMap[it[StudentPeriods.courseType]] ?: CourseType.UNKNOWN,
                         it[StudentPeriods.day],
                         it[StudentPeriods.period]
                     )
@@ -166,7 +177,8 @@ fun Route.courseStudentsRoute(db: Database) {
                     StudentData(
                         it[Students.firstName],
                         it[Students.lastName],
-                        it[Students.isTeacher]
+                        it[Students.isTeacher],
+                        StudentType.studentTypeMap[it[Students.studentType]] ?: StudentType.UNKNOWN
                     )
                 }
 
