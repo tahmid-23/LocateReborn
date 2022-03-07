@@ -37,7 +37,8 @@ fun Route.studentListRoute(db: Database) {
                         it[Students.firstName],
                         it[Students.lastName],
                         it[Students.isTeacher],
-                        StudentType.studentTypeMap[it[Students.studentType]] ?: StudentType.UNKNOWN
+                        StudentType.studentTypeMap[it[Students.studentType]] ?: StudentType.UNKNOWN,
+                        it[Students.roomNumber]
                     )
                 }
 
@@ -70,7 +71,8 @@ fun Route.studentInfoRoute(db: Database) {
                         it[Students.firstName],
                         it[Students.lastName],
                         it[Students.isTeacher],
-                        StudentType.studentTypeMap[it[Students.studentType]] ?: StudentType.UNKNOWN
+                        StudentType.studentTypeMap[it[Students.studentType]] ?: StudentType.UNKNOWN,
+                        it[Students.roomNumber]
                     )
                 }
 
@@ -178,7 +180,8 @@ fun Route.courseStudentsRoute(db: Database) {
                         it[Students.firstName],
                         it[Students.lastName],
                         it[Students.isTeacher],
-                        StudentType.studentTypeMap[it[Students.studentType]] ?: StudentType.UNKNOWN
+                        StudentType.studentTypeMap[it[Students.studentType]] ?: StudentType.UNKNOWN,
+                        it[Students.roomNumber]
                     )
                 }
 

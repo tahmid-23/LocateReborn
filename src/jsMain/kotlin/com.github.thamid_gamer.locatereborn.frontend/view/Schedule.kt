@@ -72,7 +72,12 @@ val schedule = FC<ScheduleProps> { props ->
         }
     }
     h1 {
-        +"${props.studentData.firstName} ${props.studentData.lastName}"
+        +buildString {
+            append("${props.studentData.firstName} ${props.studentData.lastName}")
+            if (props.studentData.roomNumber != null) {
+                append(" (${props.studentData.roomNumber})")
+            }
+        }
     }
     table {
         tbody {

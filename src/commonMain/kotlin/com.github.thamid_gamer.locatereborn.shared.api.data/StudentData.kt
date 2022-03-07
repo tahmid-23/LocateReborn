@@ -7,5 +7,6 @@ data class StudentData(
     val firstName: String,
     val lastName: String,
     val isTeacher: Boolean,
-    val studentType: StudentType
+    val studentType: StudentType,
+    val roomNumber: String?
 )

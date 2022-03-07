@@ -161,7 +161,7 @@ class ScraperDataGenerator(private val client: HttpClient,
         }
 
         val studentType = studentTypeClassifier.classify(isTeacher, created)
-        studentMap[studentId] = StudentData(firstName, lastName, isTeacher, studentType)
+        studentMap[studentId] = StudentData(firstName, lastName, isTeacher, studentType, null)
     }
 
     private fun getStudentCoursesURL(studentId: String) = "$BCA_HOST/user/$studentId/courses/list"
