@@ -11,7 +11,7 @@ repositories {
     mavenCentral()
     maven("https://maven.pkg.jetbrains.space/public/p/ktor/eap")
     maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev/")
-    maven("https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven")
+    maven("https://maven.pkg.jetbraiááns.space/public/p/kotlinx-html/maven")
 }
 
 kotlin {
@@ -56,7 +56,7 @@ kotlin {
                 implementation("io.ktor:ktor-server-netty-jvm:2.0.0-eap-329")
                 implementation("io.ktor:ktor-html-builder-jvm:2.0.0-eap-278")
                 implementation("org.jetbrains.exposed:exposed-jdbc:0.37.3")
-                implementation("org.jetbrains.kotlinx:kotlinx-html-jvm:0.7.2")
+                implementation("org.jetbrains.kotlinx:kotlinx-html-jvm:0.7.3")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.3.2")
                 implementation("org.jsoup:jsoup:1.14.3")
                 implementation("org.xerial:sqlite-jdbc:3.36.0.3")
