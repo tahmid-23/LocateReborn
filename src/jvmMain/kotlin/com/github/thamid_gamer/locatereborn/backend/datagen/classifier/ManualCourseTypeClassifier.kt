@@ -32,7 +32,7 @@ class ManualCourseTypeClassifier : CourseTypeClassifier {
         put(CourseType.ELECTIVE, listOf("wind chimes", "model un", "criminology", "speaking", "screenwriting", "mars",
             "yearbook", "card games", "mouse trap", "journalism", "rocketry", "mythology", "propaganda",
             "conversation", "sign", "east asia", "traditional", "design", "podcast", "earthquake", "passion",
-            "sustainable", "leadership", "ptf-mml"))
+            "sustainable", "leadership", "ptf-mml", "astronomy"))
     }
 
     override fun classify(simpleCourseName: String): CourseType {
