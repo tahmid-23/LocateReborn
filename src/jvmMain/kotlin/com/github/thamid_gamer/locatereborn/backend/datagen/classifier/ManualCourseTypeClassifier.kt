@@ -8,7 +8,7 @@ class ManualCourseTypeClassifier : CourseTypeClassifier {
         put(CourseType.ART, listOf("acting", "visual", "music", "digital", "directing", "voice", "conducting", "media",
             "theatre", "design prod", "graphic", "theatre", "orchestra", "dance", "concert", "video",
             "interactive design", "creative art", "imaging", "guitar", "theremin", "photoshop", "band", "choir",
-            "emerging tech", "art", "fashion", "yoga", "playwriting", "wind ensemble"))
+            "emerging tech", "art", "fashion", "yoga", "playwriting", "wind ensemble", "one act"))
         put(CourseType.MATH, listOf("analysis", "alg", "calc", "discrete", "stat", "math"))
         put(CourseType.ENGLISH, listOf("lit", "writing", "poet"))
         put(CourseType.HISTORY, listOf("hist", "gov", "psych"))
