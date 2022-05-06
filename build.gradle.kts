@@ -1,6 +1,6 @@
 plugins {
-    kotlin("multiplatform") version "1.6.20-RC"
-    kotlin("plugin.serialization") version "1.6.20-M1-106"
+    kotlin("multiplatform") version "1.6.20"
+    kotlin("plugin.serialization") version "1.6.20"
     application
 }
 
@@ -47,13 +47,14 @@ kotlin {
             dependencies {
                 implementation("ch.qos.logback:logback-classic:1.3.0-alpha13")
                 implementation("com.google.api-client:google-api-client:1.33.2")
-                implementation("io.ktor:ktor-client-apache:2.0.0-eap-329")
-                implementation("io.ktor:ktor-client-logging:2.0.0-eap-329")
-                implementation("io.ktor:ktor-serialization-kotlinx-json-jvm:2.0.0-eap-329")
-                implementation("io.ktor:ktor-server-content-negotiation-jvm:2.0.0-eap-329")
-                implementation("io.ktor:ktor-server-call-logging-jvm:2.0.0-eap-329")
-                implementation("io.ktor:ktor-server-sessions-jvm:2.0.0-eap-329")
-                implementation("io.ktor:ktor-server-netty-jvm:2.0.0-eap-329")
+                implementation("io.ktor:ktor-client-apache:2.0.1")
+                implementation("io.ktor:ktor-client-logging:2.0.1")
+                implementation("io.ktor:ktor-serialization-kotlinx-json-jvm:2.0.1")
+                implementation("io.ktor:ktor-server-content-negotiation-jvm:2.0.1")
+                implementation("io.ktor:ktor-server-call-logging-jvm:2.0.1")
+                implementation("io.ktor:ktor-server-http-redirect:2.0.1")
+                implementation("io.ktor:ktor-server-sessions-jvm:2.0.1")
+                implementation("io.ktor:ktor-server-netty-jvm:2.0.1")
                 implementation("io.ktor:ktor-html-builder-jvm:2.0.0-eap-278")
                 implementation("org.jetbrains.exposed:exposed-jdbc:0.37.3")
                 implementation("org.jetbrains.kotlinx:kotlinx-html-jvm:0.7.3")
@@ -65,9 +66,9 @@ kotlin {
         val jvmTest by getting
         val jsMain by getting {
             dependencies {
-                implementation("io.ktor:ktor-client-js:2.0.0-eap-329")
-                implementation("io.ktor:ktor-client-content-negotiation-js:2.0.0-eap-329")
-                implementation("io.ktor:ktor-serialization-kotlinx-json-js:2.0.0-eap-329")
+                implementation("io.ktor:ktor-client-js:2.0.1")
+                implementation("io.ktor:ktor-client-content-negotiation-js:2.0.1")
+                implementation("io.ktor:ktor-serialization-kotlinx-json-js:2.0.1")
                 implementation("org.jetbrains.kotlin-wrappers:kotlin-react:17.0.2-pre.293-kotlin-1.6.10")
                 implementation("org.jetbrains.kotlin-wrappers:kotlin-react-dom:17.0.2-pre.293-kotlin-1.6.10")
                 implementation("org.jetbrains.kotlin-wrappers:kotlin-react-router-dom:6.2.1-pre.293-kotlin-1.6.10")

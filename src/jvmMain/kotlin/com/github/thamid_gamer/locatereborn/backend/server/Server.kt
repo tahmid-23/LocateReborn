@@ -24,6 +24,7 @@ import io.ktor.server.html.*
 import io.ktor.server.http.content.*
 import io.ktor.server.plugins.callloging.*
 import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.plugins.httpsredirect.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
@@ -69,6 +70,7 @@ fun main() {
         install(ContentNegotiation) {
             json()
         }
+        install(HttpsRedirect)
         install(Sessions) {
             cookie<LocateSession>("locate_session")
         }
