@@ -69,12 +69,17 @@ fun main(args: Array<String>) {
 
     val authRouteCreator = GoogleAuthRouteCreator(db, tokenVerifier)
 
-    embeddedServer(Netty, System.getenv("PORT")?.toIntOrNull() ?: 80, "127.0.0.1") {
+    val port = System.getenv("PORT")?.toIntOrNull() ?: 80
+    embeddedServer(Netty, port, "127.0.0.1") {
         install(CallLogging)
         install(ContentNegotiation) {
             json()
         }
-        install(HttpsRedirect)
+        /* TODO: figure out how to upgrade http
+        install(HttpsRedirect) {
+            sslPort = port
+        }
+         */
         install(Sessions) {
             cookie<LocateSession>("locate_session")
         }
