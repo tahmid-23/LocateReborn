@@ -2,6 +2,7 @@ package com.github.thamid_gamer.locatereborn.frontend.view
 
 import com.github.thamid_gamer.locatereborn.frontend.helmet.helmet
 import com.github.thamid_gamer.locatereborn.shared.google.clientId
+import csstype.ClassName
 import kotlinx.browser.document
 import kotlinx.browser.window
 import react.*
@@ -35,10 +36,10 @@ fun ChildrenBuilder.loginRoute() {
                 }
             }
             div {
-                className = "container"
+                className = ClassName("container")
                 header {
                     id = "locate-header"
-                    className = "centered-section"
+                    className = ClassName("centered-section")
                     img {
                         id = "locate-header-logo"
                         src = "/static/image/monocle-cat.png"
@@ -46,25 +47,25 @@ fun ChildrenBuilder.loginRoute() {
                     }
                     p {
                         id = "locate-header-title"
-                        className = "header-text"
+                        className = ClassName("header-text")
                         +"Locate Reborn"
                     }
                     p {
                         id = "locate-header-version"
-                        className = "header-text"
+                        className = ClassName("header-text")
                         +"v2.0 (not yet)"
                     }
                 }
                 div {
-                    className = "centered-section"
+                    className = ClassName("centered-section")
                     div {
-                        className = "centered-column"
+                        className = ClassName("centered-column")
                         p {
-                            className = "locate-message centered-text"
+                            className = ClassName("locate-message centered-text")
                             +"This site is only for BCA students."
                         }
                         p {
-                            className = "locate-message centered-text"
+                            className = ClassName("locate-message centered-text")
                             +"Use and share our vanity URL: "
                             a {
                                 href = "bit.ly/locatebca"
@@ -74,16 +75,16 @@ fun ChildrenBuilder.loginRoute() {
                     }
                 }
                 div {
-                    className = "centered-section"
+                    className = ClassName("centered-section")
                     div {
-                        className = "centered-column"
+                        className = ClassName("centered-column")
                         div {
                             id = "sign-in-with-google-button"
                         }
 
                         if (loginFailed) {
                             p {
-                                className = "error-message centered-text"
+                                className = ClassName("error-message centered-text")
                                 +"Failed to log in!"
                             }
                         }

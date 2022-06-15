@@ -1,7 +1,7 @@
 plugins {
-    kotlin("multiplatform") version "1.6.20"
-    kotlin("plugin.serialization") version "1.6.20"
     application
+    kotlin("multiplatform") version "1.7.0"
+    kotlin("plugin.serialization") version "1.7.0"
 }
 
 group = "com.github.thamid_gamer"
@@ -9,7 +9,6 @@ version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
-    maven("https://maven.pkg.jetbrains.space/public/p/ktor/eap")
     maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev/")
     maven("https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven")
 }
@@ -35,7 +34,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.3.2")
+                implementation(libs.kotlinx.serialization.core)
             }
         }
         val commonTest by getting {
@@ -45,34 +44,35 @@ kotlin {
         }
         val jvmMain by getting {
             dependencies {
-                implementation("ch.qos.logback:logback-classic:1.3.0-alpha13")
-                implementation("com.google.api-client:google-api-client:1.33.2")
-                implementation("io.ktor:ktor-client-apache:2.0.1")
-                implementation("io.ktor:ktor-client-logging:2.0.1")
-                implementation("io.ktor:ktor-serialization-kotlinx-json-jvm:2.0.1")
-                implementation("io.ktor:ktor-server-content-negotiation-jvm:2.0.1")
-                implementation("io.ktor:ktor-server-call-logging-jvm:2.0.1")
-                implementation("io.ktor:ktor-server-http-redirect:2.0.1")
-                implementation("io.ktor:ktor-server-sessions-jvm:2.0.1")
-                implementation("io.ktor:ktor-server-netty-jvm:2.0.1")
-                implementation("io.ktor:ktor-html-builder-jvm:2.0.0-eap-278")
-                implementation("org.jetbrains.exposed:exposed-jdbc:0.37.3")
-                implementation("org.jetbrains.kotlinx:kotlinx-html-jvm:0.7.3")
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.3.2")
-                implementation("org.jsoup:jsoup:1.14.3")
-                implementation("org.xerial:sqlite-jdbc:3.36.0.3")
+                implementation(libs.exposed)
+                implementation(libs.google.api.client)
+                implementation(libs.jsoup)
+                implementation(libs.kotlinx.html)
+                implementation(libs.kotlinx.serialization.json)
+                implementation(libs.ktor.client.apache)
+                implementation(libs.ktor.client.contentNegotiation)
+                implementation(libs.ktor.client.logging)
+                implementation(libs.ktor.serialization.kotlinx.json)
+                implementation(libs.ktor.server.contentNegotiation)
+                implementation(libs.ktor.server.logging)
+                implementation(libs.ktor.server.htmlBuilder)
+                implementation(libs.ktor.server.httpRedirect)
+                implementation(libs.ktor.server.netty)
+                implementation(libs.ktor.server.sessions)
+                implementation(libs.logback)
+                implementation(libs.sqlite)
             }
         }
         val jvmTest by getting
         val jsMain by getting {
             dependencies {
-                implementation("io.ktor:ktor-client-js:2.0.1")
-                implementation("io.ktor:ktor-client-content-negotiation-js:2.0.1")
-                implementation("io.ktor:ktor-serialization-kotlinx-json-js:2.0.1")
-                implementation("org.jetbrains.kotlin-wrappers:kotlin-react:17.0.2-pre.293-kotlin-1.6.10")
-                implementation("org.jetbrains.kotlin-wrappers:kotlin-react-dom:17.0.2-pre.293-kotlin-1.6.10")
-                implementation("org.jetbrains.kotlin-wrappers:kotlin-react-router-dom:6.2.1-pre.293-kotlin-1.6.10")
-                implementation(npm("react-helmet-async", "1.2.2"))
+                implementation(libs.ktor.client.js)
+                implementation(libs.ktor.client.contentNegotiation)
+                implementation(libs.ktor.serialization.kotlinx.json)
+                implementation(libs.react)
+                implementation(libs.react.dom)
+                implementation(libs.react.router)
+                implementation(npm("react-helmet-async", "1.3.0"))
             }
         }
         val jsTest by getting

@@ -5,6 +5,7 @@ import com.github.thamid_gamer.locatereborn.frontend.data.CourseTypeColorizer
 import com.github.thamid_gamer.locatereborn.frontend.helmet.helmet
 import com.github.thamid_gamer.locatereborn.shared.api.data.PeriodData
 import com.github.thamid_gamer.locatereborn.shared.api.data.StudentData
+import csstype.ClassName
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.forms.*
@@ -104,9 +105,9 @@ val schedule = FC<ScheduleProps> { props ->
                         }
                         else {
                             td {
-                                className = props.courseTypeColorizer.colorize(course.courseType)
+                                className = ClassName(props.courseTypeColorizer.colorize(course.courseType))
                                 Link {
-                                    className = "directory-link"
+                                    className = ClassName("directory-link")
                                     to = course.getRoute()
                                     +course.simpleCourseName
                                 }
@@ -119,7 +120,7 @@ val schedule = FC<ScheduleProps> { props ->
     }
     br {}
     span {
-        className = "aligned-row"
+        className = ClassName("aligned-row")
         button {
             onClick = {
                 navigate("/students")
@@ -182,7 +183,7 @@ fun ChildrenBuilder.scheduleRoute(client: HttpClient,
             val id = searchParams.get("id")
             if (id == null) {
                 p {
-                    className = "error-message"
+                    className = ClassName("error-message")
                     +"No id query parameter set."
                 }
                 return@FC
@@ -193,7 +194,7 @@ fun ChildrenBuilder.scheduleRoute(client: HttpClient,
                 val propCourses = courses
                 if (propStudentData == null || propCourses == null) {
                     p {
-                        className = "error-message"
+                        className = ClassName("error-message")
                         +"No student has id ${searchParams.get("id")}."
                     }
                 }

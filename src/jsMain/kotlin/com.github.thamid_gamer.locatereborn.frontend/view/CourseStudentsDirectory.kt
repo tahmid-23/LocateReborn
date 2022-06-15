@@ -4,6 +4,7 @@ import com.github.thamid_gamer.locatereborn.frontend.helmet.helmet
 import com.github.thamid_gamer.locatereborn.shared.api.data.CourseType
 import com.github.thamid_gamer.locatereborn.shared.api.data.PeriodData
 import com.github.thamid_gamer.locatereborn.shared.api.data.StudentData
+import csstype.ClassName
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.forms.*
@@ -51,7 +52,7 @@ val courseStudentsDirectory = FC<CourseStudentsDirectoryProps> { props ->
         for (student in props.students) {
             li {
                 Link {
-                    className = "directory-link"
+                    className = ClassName("directory-link")
                     to = "/student?id=${student.key}"
                     +"${student.value.firstName} ${student.value.lastName}"
                 }
@@ -60,7 +61,7 @@ val courseStudentsDirectory = FC<CourseStudentsDirectoryProps> { props ->
     }
     br {}
     span {
-        className = "aligned-row"
+        className = ClassName("aligned-row")
         button {
             onClick = {
                 navigate("/students")
@@ -89,7 +90,7 @@ fun ChildrenBuilder.courseStudentsDirectoryRoute(client: HttpClient, scope: Coro
             val schoologyCourseId = searchParams.get("schoologyCourseId")
             if (schoologyCourseId == null) {
                 p {
-                    className = "error-message"
+                    className = ClassName("error-message")
                     +"No schoologyCourseId query parameter set."
                 }
                 return@FC
@@ -98,7 +99,7 @@ fun ChildrenBuilder.courseStudentsDirectoryRoute(client: HttpClient, scope: Coro
             val dayParam = searchParams.get("day")
             if (dayParam == null) {
                 p {
-                    className = "error-message"
+                    className = ClassName("error-message")
                     +"No day query parameter set."
                 }
                 return@FC
@@ -106,7 +107,7 @@ fun ChildrenBuilder.courseStudentsDirectoryRoute(client: HttpClient, scope: Coro
             val day = dayParam.toIntOrNull()
             if (day == null) {
                 p {
-                    className = "error-message"
+                    className = ClassName("error-message")
                     +"day query parameter is not an integer."
                 }
                 return@FC
@@ -115,7 +116,7 @@ fun ChildrenBuilder.courseStudentsDirectoryRoute(client: HttpClient, scope: Coro
             val periodParam = searchParams.get("period")
             if (periodParam == null) {
                 p {
-                    className = "error-message"
+                    className = ClassName("error-message")
                     +"No periodParam query parameter set."
                 }
                 return@FC
@@ -123,7 +124,7 @@ fun ChildrenBuilder.courseStudentsDirectoryRoute(client: HttpClient, scope: Coro
             val period = periodParam.toIntOrNull()
             if (period == null) {
                 p {
-                    className = "error-message"
+                    className = ClassName("error-message")
                     +"period query parameter is not an integer."
                 }
                 return@FC

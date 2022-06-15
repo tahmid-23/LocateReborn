@@ -13,6 +13,7 @@ import kotlinx.browser.window
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import react.*
+import react.dom.client.createRoot
 import react.dom.html.ReactHTML.div
 import react.dom.html.ReactHTML.p
 import react.dom.render
@@ -32,7 +33,7 @@ fun main() {
     window.onload = {
         val rootElement = document.getElementById("root") ?: throw IllegalStateException("No root element!")
 
-        render(FC<Props> {
+        createRoot(rootElement).render(FC<Props> {
             helmetProvider {
                 BrowserRouter {
                     Routes {
@@ -43,6 +44,6 @@ fun main() {
                     }
                 }
             }
-        }.create(), rootElement)
+        }.create())
     }
 }

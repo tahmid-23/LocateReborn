@@ -51,10 +51,14 @@ fun HTML.index() {
     }
 }
 
-fun main() {
+fun main(args: Array<String>) {
     val path = System.getenv("LOCATE_DB_PATH") ?: "."
     val db = Database.connect("jdbc:sqlite:$path/locatereborn.db")
     db.transactionManager.defaultIsolationLevel = TRANSACTION_SERIALIZABLE
+
+    if ("downloadData" in args) {
+        downloadData(db)
+    }
 
     val apacheClient = HttpClients.createDefault()
     val apacheHttpTransport = ApacheHttpTransport(apacheClient)
@@ -76,7 +80,6 @@ fun main() {
         }
 
         routing {
-            // TODO: this is ugly
             get("/") {
                 val session = call.sessions.get<LocateSession>()
                 if (session != null) {
@@ -106,11 +109,7 @@ fun main() {
     }.start(true)
 }
 
-private fun downloadData(): Database {
-    val path = System.getenv("LOCATE_DB_PATH") ?: "."
-    val db = Database.connect("jdbc:sqlite:$path/locatereborn.db")
-    db.transactionManager.defaultIsolationLevel = TRANSACTION_SERIALIZABLE
-
+private fun downloadData(db: Database) {
     val client = HttpClient {
         install(HttpCookies)
         install(HttpRequestRetry)
@@ -125,6 +124,4 @@ private fun downloadData(): Database {
     val databaseInserter = SQLDatabaseInserter(db, dataGenerator, generatorRequest)
 
     databaseInserter.refreshData()
-
-    return db
 }

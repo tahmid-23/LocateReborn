@@ -4,6 +4,7 @@ import com.github.thamid_gamer.locatereborn.frontend.helmet.helmet
 import com.github.thamid_gamer.locatereborn.frontend.view.FilterOrder.Companion.defaultOrder
 import com.github.thamid_gamer.locatereborn.shared.api.data.StudentData
 import com.github.thamid_gamer.locatereborn.shared.api.data.StudentType
+import csstype.ClassName
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
@@ -111,7 +112,7 @@ val studentDirectory = FC<StudentDirectoryProps> { props ->
         +"Students and Teachers"
     }
     span {
-        className = "aligned-row horizontally-spaced-row"
+        className = ClassName("aligned-row horizontally-spaced-row")
         label {
             input {
                 type = InputType.text
@@ -124,11 +125,11 @@ val studentDirectory = FC<StudentDirectoryProps> { props ->
             }
         }
         span {
-            className = "aligned-row"
+            className = ClassName("aligned-row")
             +"Matches: $matches"
         }
         span {
-            className = "aligned-row"
+            className = ClassName("aligned-row")
             label {
                 htmlFor = "filter-order"
                 +"Filter By: "
@@ -155,7 +156,7 @@ val studentDirectory = FC<StudentDirectoryProps> { props ->
             }
         }
         span {
-            className = "aligned-row"
+            className = ClassName("aligned-row")
             label {
                 htmlFor = "sort-descending"
                 +"Sort Descending: "
@@ -170,7 +171,7 @@ val studentDirectory = FC<StudentDirectoryProps> { props ->
             }
         }
         span {
-            className = "aligned-row"
+            className = ClassName("aligned-row")
             label {
                 htmlFor = "grade-filter"
                 +"Grade: "
@@ -217,7 +218,7 @@ val studentDirectory = FC<StudentDirectoryProps> { props ->
         for (student in sortedStudentsCopy) {
             li {
                 Link {
-                    className = "directory-link"
+                    className = ClassName("directory-link")
                     to = "/student?id=${student.key}"
                     +"${student.value.firstName} ${student.value.lastName}"
                 }
