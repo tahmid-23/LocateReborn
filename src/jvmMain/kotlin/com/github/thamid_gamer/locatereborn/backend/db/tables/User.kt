@@ -6,6 +6,8 @@ object User : Table() {
 
     val username = varchar("username", 100)
 
+    val email = varchar("email", 25).nullable()
+
     override val primaryKey = PrimaryKey(username, name = "PK_USERS_ID")
 
 }

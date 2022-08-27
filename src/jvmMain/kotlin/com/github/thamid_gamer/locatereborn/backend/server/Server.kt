@@ -106,7 +106,6 @@ fun main(args: Array<String>) {
             authRouteCreator.createRoute(this)
             route("/api") {
                 studentListRoute(db)
-                studentInfoRoute(db)
                 studentCoursesRoute(db)
                 courseListRoute(db)
                 courseStudentsRoute(db)

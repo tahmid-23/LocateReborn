@@ -54,6 +54,7 @@ class GoogleAuthRouteCreator(
             }
 
             val username = verifiedToken.payload["name"] as? String
+            val email = verifiedToken.payload.email
             call.sessions.set(LocateSession(username ?: "Unknown"))
 
             call.response.header(HttpHeaders.Location, "/students")
@@ -75,6 +76,7 @@ class GoogleAuthRouteCreator(
                     else {
                         User.insert {
                             it[User.username] = username
+                            it[User.email] = email
                         }
                     }
                 }
