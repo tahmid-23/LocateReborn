@@ -5,6 +5,7 @@ import com.github.thamid_gamer.locatereborn.backend.db.SQLDatabaseInserter
 import com.github.thamid_gamer.locatereborn.backend.datagen.generator.ScraperDataGenerator
 import com.github.thamid_gamer.locatereborn.backend.datagen.classifier.ManualCourseTypeClassifier
 import com.github.thamid_gamer.locatereborn.backend.datagen.generator.GeneratorRequest
+import com.github.thamid_gamer.locatereborn.backend.db.DatabaseInserter
 import com.github.thamid_gamer.locatereborn.backend.server.auth.GoogleAuthRouteCreator
 import com.github.thamid_gamer.locatereborn.backend.server.routes.*
 import com.github.thamid_gamer.locatereborn.backend.server.session.LocateSession
@@ -28,6 +29,7 @@ import io.ktor.server.plugins.httpsredirect.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
+import kotlinx.coroutines.runBlocking
 import kotlinx.html.*
 import org.apache.http.impl.client.HttpClients
 import org.jetbrains.exposed.sql.*
@@ -57,7 +59,9 @@ fun main(args: Array<String>) {
     db.transactionManager.defaultIsolationLevel = TRANSACTION_SERIALIZABLE
 
     if ("downloadData" in args) {
-        downloadData(db)
+        runBlocking {
+            downloadData(SQLDatabaseInserter(db))
+        }
     }
 
     val apacheClient = HttpClients.createDefault()
@@ -96,7 +100,7 @@ fun main(args: Array<String>) {
                 call.respondHtml(HttpStatusCode.OK, HTML::index)
             }
             get("*") {
-                call.respondHtml(HttpStatusCode.OK, HTML::index)
+                call.respondHtml(HttpStatusCode.NotFound, HTML::index)
             }
 
             authRouteCreator.createRoute(this)
@@ -114,7 +118,7 @@ fun main(args: Array<String>) {
     }.start(true)
 }
 
-private fun downloadData(db: Database) {
+private suspend fun downloadData(databaseInserter: DatabaseInserter) {
     val client = HttpClient {
         install(HttpCookies)
         install(HttpRequestRetry)
@@ -126,7 +130,5 @@ private fun downloadData(db: Database) {
     val password = System.getenv("SCHOOLOGY_PASSWORD")
         ?: throw IllegalArgumentException("SCHOOLOGY_PASSWORD environment variable undefined")
     val generatorRequest = GeneratorRequest(username, password, listOf("2233228305", "2232950152"))
-    val databaseInserter = SQLDatabaseInserter(db, dataGenerator, generatorRequest)
-
-    databaseInserter.refreshData()
+    databaseInserter.updateData(dataGenerator.generateData(generatorRequest))
 }

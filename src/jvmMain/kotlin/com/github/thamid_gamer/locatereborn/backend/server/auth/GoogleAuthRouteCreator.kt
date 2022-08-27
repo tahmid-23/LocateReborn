@@ -1,6 +1,6 @@
 package com.github.thamid_gamer.locatereborn.backend.server.auth
 
-import com.github.thamid_gamer.locatereborn.backend.db.tables.Users
+import com.github.thamid_gamer.locatereborn.backend.db.tables.User
 import com.github.thamid_gamer.locatereborn.backend.server.session.LocateSession
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier
@@ -61,9 +61,9 @@ class GoogleAuthRouteCreator(
 
             if (username != null) {
                 newSuspendedTransaction(Dispatchers.IO, db) {
-                    SchemaUtils.create(Users)
+                    SchemaUtils.create(User)
 
-                    val present = Users.select(Users.username eq username).toList().isNotEmpty()
+                    val present = User.select(User.username eq username).toList().isNotEmpty()
                     if (present) {
                         // NO-OP: just for future if Users becomes a larger table
                         /*
@@ -73,8 +73,8 @@ class GoogleAuthRouteCreator(
                          */
                     }
                     else {
-                        Users.insert {
-                            it[Users.username] = username
+                        User.insert {
+                            it[User.username] = username
                         }
                     }
                 }

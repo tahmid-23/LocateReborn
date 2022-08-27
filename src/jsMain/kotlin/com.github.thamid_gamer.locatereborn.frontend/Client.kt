@@ -21,7 +21,6 @@ import react.router.Route
 import react.router.Routes
 import react.router.dom.BrowserRouter
 
-// TODO: React Redux to store state when we go back?
 fun main() {
     val client = HttpClient {
         install(ContentNegotiation) {

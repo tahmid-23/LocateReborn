@@ -1,7 +1,9 @@
 package com.github.thamid_gamer.locatereborn.backend.db
 
+import com.github.thamid_gamer.locatereborn.backend.datagen.generator.DataGenerationResult
+
 interface DatabaseInserter {
 
-    fun refreshData()
+    suspend fun updateData(dataGenerationResult: DataGenerationResult)
 
 }

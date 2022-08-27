@@ -3,9 +3,9 @@ package com.github.thamid_gamer.locatereborn.backend.datagen.generator
 import com.github.thamid_gamer.locatereborn.backend.datagen.classifier.CourseTypeClassifier
 import com.github.thamid_gamer.locatereborn.backend.datagen.classifier.StudentTypeClassifier
 import com.github.thamid_gamer.locatereborn.backend.datagen.exception.LocateDataGenerationException
-import com.github.thamid_gamer.locatereborn.shared.api.data.CourseType
-import com.github.thamid_gamer.locatereborn.shared.api.data.PeriodData
+import com.github.thamid_gamer.locatereborn.shared.api.data.CourseData
 import com.github.thamid_gamer.locatereborn.shared.api.data.StudentData
+import com.github.thamid_gamer.locatereborn.shared.api.data.StudentPeriodData
 import io.ktor.client.*
 import io.ktor.client.plugins.*
 import io.ktor.client.request.*
@@ -39,14 +39,14 @@ class ScraperDataGenerator(private val client: HttpClient,
             throw LocateDataGenerationException("Login failed!")
         }
 
-        val studentMap = mutableMapOf<String, StudentData>()
-        val studentPeriods = mutableMapOf<String, MutableCollection<PeriodData>>()
+        val studentMap = mutableMapOf<String, Pair<StudentData, Collection<StudentPeriodData>>>()
+        val courseMap = mutableMapOf<String, CourseData>()
 
         for (groupId in request.groups) {
-            scrapeGroup(groupId, studentMap, studentPeriods)
+            scrapeGroup(groupId, studentMap, courseMap)
         }
 
-        return DataGenerationResult(studentMap, studentPeriods)
+        return DataGenerationResult(studentMap, courseMap)
     }
 
     private suspend fun login(request: GeneratorRequest): Boolean {
@@ -88,12 +88,12 @@ class ScraperDataGenerator(private val client: HttpClient,
 
     private suspend fun scrapeGroup(
         groupId: String,
-        studentMap: MutableMap<String, StudentData>,
-        studentPeriods: MutableMap<String, MutableCollection<PeriodData>>
+        studentMap: MutableMap<String, Pair<StudentData, Collection<StudentPeriodData>>>,
+        courseMap: MutableMap<String, CourseData>
     ) {
         val pageCount = getGroupPageCount(groupId) ?: return
 
-        for (page in 1uL..pageCount) {
+        for (page in 1..pageCount) {
             val parameters = parametersOf("ss" to listOf(""), "p" to listOf(page.toString()))
             val response = client.submitForm(getGroupPageURL(groupId), parameters, true) {
                 handleTooManyRequests()
@@ -104,12 +104,12 @@ class ScraperDataGenerator(private val client: HttpClient,
                 ?.child(0) ?: continue
 
             for (student in students.children()) {
-                scrapeStudentCourses(student, studentMap, studentPeriods)
+                scrapeStudentCourses(student, studentMap, courseMap)
             }
         }
     }
 
-    private suspend fun getGroupPageCount(groupId: String): ULong? {
+    private suspend fun getGroupPageCount(groupId: String): Int? {
         val response = client.get(getGroupURL(groupId)) {
             handleTooManyRequests()
         }
@@ -117,7 +117,7 @@ class ScraperDataGenerator(private val client: HttpClient,
         val document = Jsoup.parse(response.bodyAsText())
         val studentCount = document.getElementsByClass("total").firstOrNull()?.text()?.toDouble()
             ?.div(STUDENTS_PER_PAGE)
-        return if (studentCount != null) ceil(studentCount).toULong() else null
+        return if (studentCount != null) ceil(studentCount).toInt() else null
     }
 
     private fun getGroupURL(groupId: String) = "$BCA_HOST/group/$groupId/members"
@@ -126,8 +126,8 @@ class ScraperDataGenerator(private val client: HttpClient,
 
     private suspend fun scrapeStudentCourses(
         student: Element,
-        studentMap: MutableMap<String, StudentData>,
-        studentPeriods: MutableMap<String, MutableCollection<PeriodData>>
+        studentMap: MutableMap<String, Pair<StudentData, Collection<StudentPeriodData>>>,
+        courseMap: MutableMap<String, CourseData>
     ) {
         val studentLink = student.child(1).child(0)
         val studentId = studentLink.attr("href").substring("/user/".length)
@@ -147,33 +147,33 @@ class ScraperDataGenerator(private val client: HttpClient,
         }
 
         val document = Jsoup.parse(response.bodyAsText())
-        val courses = document.getElementsByClass("my-courses-item-list").firstOrNull() ?: return
+        val courses = document.getElementsByClass("my-courses-item-list").firstOrNull()?.children() ?: return
 
-        val created = buildList {
-            for (course in courses.children()) {
-                val parsed = parseCourse(course)
-                addAll(parsed)
 
-                for (parsedCourse in parsed) {
-                    studentPeriods.getOrPut(studentId, ::mutableListOf).add(parsedCourse)
-                }
+        val createdCourses = mutableListOf<CourseData>()
+        val createdStudentPeriods = mutableListOf<StudentPeriodData>()
+        for (course in courses) {
+            parseCourse(studentId, course)?.let {
+                courseMap.getOrPut(it.first.first) { it.first.second }
+                createdCourses.add(it.first.second)
+                createdStudentPeriods.addAll(it.second)
             }
         }
 
-        val studentType = studentTypeClassifier.classify(isTeacher, created)
-        studentMap[studentId] = StudentData(firstName, lastName, isTeacher, studentType, null)
+        val studentType = studentTypeClassifier.classify(isTeacher, createdCourses)
+        studentMap[studentId] = Pair(StudentData(studentId, firstName, lastName, isTeacher, studentType, null), createdStudentPeriods)
     }
 
     private fun getStudentCoursesURL(studentId: String) = "$BCA_HOST/user/$studentId/courses/list"
 
-    private fun parseCourse(course: Element): Iterable<PeriodData> {
+    private fun parseCourse(studentId: String, course: Element): Pair<Pair<String, CourseData>, Collection<StudentPeriodData>>? {
         val courseLink = course.child(0).child(1).child(0)
         val schoologyCourseId = courseLink.attr("href").substring("/course/".length)
         val fullCourseName = courseLink.ownText()
 
-        val nameComponents = Regex("\\s*(.+)\\s*:\\s*(.+)\\s*").find(fullCourseName) ?: return emptyList()
+        val nameComponents = Regex("\\s*(.+)\\s*:\\s*(.+)\\s*").find(fullCourseName) ?: return null
         if (nameComponents.groupValues.size != 3) {
-            return emptyList()
+            return null
         }
 
         val simpleCourseName = nameComponents.groupValues[1]
@@ -181,20 +181,14 @@ class ScraperDataGenerator(private val client: HttpClient,
         val timesComponent = nameComponents.groupValues[2].replace(" ", "")
 
         val times = Regex("(\\d+)\\(((?:[A-E](?:-[A-E])?)(?:,(?:[A-E](?:-[A-E])?))*)\\)").findAll(timesComponent)
-        return buildList {
+        return Pair(Pair(schoologyCourseId, CourseData(schoologyCourseId, fullCourseName, simpleCourseName, courseType)), buildList {
             for (time in times) {
-                addAll(createPeriods(time, schoologyCourseId, fullCourseName, simpleCourseName, courseType))
+                addAll(createPeriods(studentId, schoologyCourseId, time))
             }
-        }
+        })
     }
 
-    private fun createPeriods(
-        time: MatchResult,
-        schoologyCourseId: String,
-        fullCourseName: String,
-        simpleCourseName: String,
-        courseType: CourseType,
-    ): Iterable<PeriodData> {
+    private fun createPeriods(studentId: String, schoologyCourseId: String, time: MatchResult): Collection<StudentPeriodData> {
         if (time.groups.size != 3) {
             return emptyList()
         }
@@ -205,84 +199,30 @@ class ScraperDataGenerator(private val client: HttpClient,
         val days = Regex("(?:[A-E](?:-[A-E])?)").findAll(daysData)
         return buildList {
             for (day in days) {
-                if (day.value.length == 1) {
-                    val course = parseSingleDay(
-                        day,
-                        schoologyCourseId,
-                        fullCourseName,
-                        simpleCourseName,
-                        courseType,
-                        period
-                    )
-
-                    if (course != null) {
-                        add(course)
-                    }
-                } else if (day.value.length == 3) {
-                    addAll(parseDayRange(day, schoologyCourseId, fullCourseName, simpleCourseName, courseType, period))
+                val startDayIndex = DAYS_RANGE.indexOf(day.value[0])
+                if (startDayIndex == -1) {
+                    continue
                 }
-            }
-        }
-    }
 
-    private fun parseSingleDay(
-        day: MatchResult,
-        schoologyCourseId: String,
-        fullCourseName: String,
-        simpleCourseName: String,
-        courseType: CourseType,
-        period: Int
-    ): PeriodData? {
-        val dayIndex = DAYS_RANGE.indexOf(day.value[0])
-        if (dayIndex == -1) {
-            return null
-        }
+                if (day.value.length == 1) {
+                    add(StudentPeriodData(studentId, schoologyCourseId, period, startDayIndex))
+                } else if (day.value.length == 3) {
+                    val endDayIndex = DAYS_RANGE.indexOf(day.value[2])
+                    if (endDayIndex == -1) {
+                        continue
+                    }
 
-        return PeriodData(
-            schoologyCourseId,
-            fullCourseName,
-            simpleCourseName,
-            courseType,
-            dayIndex + 1,
-            period
-        )
-    }
+                    val range = if (startDayIndex <= endDayIndex) {
+                        (startDayIndex + 1)..(endDayIndex + 1)
+                    }
+                    else {
+                        (endDayIndex + 1) downTo (startDayIndex + 1)
+                    }
 
-    private fun parseDayRange(
-        day: MatchResult,
-        schoologyCourseId: String,
-        fullCourseName: String,
-        simpleCourseName: String,
-        courseType: CourseType,
-        period: Int
-    ): Iterable<PeriodData> {
-        val startDayIndex = DAYS_RANGE.indexOf(day.value[0])
-        if (startDayIndex == -1) {
-            return emptyList()
-        }
-
-        val endDayIndex = DAYS_RANGE.indexOf(day.value[2])
-        if (endDayIndex == -1) {
-            return emptyList()
-        }
-
-        val range = if (startDayIndex <= endDayIndex) {
-            (startDayIndex + 1)..(endDayIndex + 1)
-        }
-        else {
-            (endDayIndex + 1) downTo (startDayIndex + 1)
-        }
-
-        return buildList {
-            for (index in range) {
-                add(PeriodData(
-                    schoologyCourseId,
-                    fullCourseName,
-                    simpleCourseName,
-                    courseType,
-                    index,
-                    period
-                ))
+                    for (dayIndex in range) {
+                        add(StudentPeriodData(studentId, schoologyCourseId, period, dayIndex))
+                    }
+                }
             }
         }
     }

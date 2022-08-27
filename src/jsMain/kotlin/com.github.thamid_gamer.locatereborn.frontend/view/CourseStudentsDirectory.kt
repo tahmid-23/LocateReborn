@@ -2,7 +2,7 @@ package com.github.thamid_gamer.locatereborn.frontend.view
 
 import com.github.thamid_gamer.locatereborn.frontend.helmet.helmet
 import com.github.thamid_gamer.locatereborn.shared.api.data.CourseType
-import com.github.thamid_gamer.locatereborn.shared.api.data.PeriodData
+import com.github.thamid_gamer.locatereborn.shared.api.data.CourseData
 import com.github.thamid_gamer.locatereborn.shared.api.data.StudentData
 import csstype.ClassName
 import io.ktor.client.*
@@ -28,8 +28,8 @@ import react.router.dom.useSearchParams
 import react.router.useNavigate
 
 external interface CourseStudentsDirectoryProps : Props {
-    var periodData: PeriodData
-    var students: Map<String, StudentData>
+    var courseData: CourseData
+    var studentData: Collection<StudentData>
 }
 
 val courseStudentsDirectory = FC<CourseStudentsDirectoryProps> { props ->
@@ -37,7 +37,7 @@ val courseStudentsDirectory = FC<CourseStudentsDirectoryProps> { props ->
 
     helmet {
         title {
-            +props.periodData.simpleCourseName
+            +props.courseData.simpleCourseName
         }
         link {
             rel = "stylesheet"
@@ -46,15 +46,15 @@ val courseStudentsDirectory = FC<CourseStudentsDirectoryProps> { props ->
         }
     }
     h1 {
-        +props.periodData.simpleCourseName
+        +props.courseData.simpleCourseName
     }
     ul {
-        for (student in props.students) {
+        for (student in props.studentData) {
             li {
                 Link {
                     className = ClassName("directory-link")
-                    to = "/student?id=${student.key}"
-                    +"${student.value.firstName} ${student.value.lastName}"
+                    to = "/student?id=${student.studentId}"
+                    +"${student.firstName} ${student.lastName}"
                 }
             }
         }
@@ -85,30 +85,13 @@ fun ChildrenBuilder.courseStudentsDirectoryRoute(client: HttpClient, scope: Coro
 
             val searchParams by useSearchParams()
             var loaded by useState(false)
-            var students by useState(emptyMap<String, StudentData>())
+            var data by useState<Pair<CourseData, Collection<StudentData>>>()
 
             val schoologyCourseId = searchParams.get("schoologyCourseId")
             if (schoologyCourseId == null) {
                 p {
                     className = ClassName("error-message")
                     +"No schoologyCourseId query parameter set."
-                }
-                return@FC
-            }
-
-            val dayParam = searchParams.get("day")
-            if (dayParam == null) {
-                p {
-                    className = ClassName("error-message")
-                    +"No day query parameter set."
-                }
-                return@FC
-            }
-            val day = dayParam.toIntOrNull()
-            if (day == null) {
-                p {
-                    className = ClassName("error-message")
-                    +"day query parameter is not an integer."
                 }
                 return@FC
             }
@@ -130,29 +113,19 @@ fun ChildrenBuilder.courseStudentsDirectoryRoute(client: HttpClient, scope: Coro
                 return@FC
             }
 
-            val fullCourseName = searchParams.get("fullCourseName") ?: "Unknown Course"
-            val simpleCourseName = searchParams.get("simpleCourseName") ?: "Unknown Course"
-            val courseTypeParam = searchParams.get("courseType")
-            val courseType = if (courseTypeParam != null) {
-                CourseType.courseTypeMap[courseTypeParam] ?: CourseType.UNKNOWN
-            }
-            else {
-                CourseType.UNKNOWN
-            }
-
-            val periodData = PeriodData(
-                schoologyCourseId,
-                fullCourseName,
-                simpleCourseName,
-                courseType,
-                day,
-                period
-            )
-
             if (loaded) {
-                courseStudentsDirectory {
-                    this.periodData = periodData
-                    this.students = students
+                val propData = data
+                if (propData == null) {
+                    p {
+                        className = ClassName("error-message")
+                        +"No course has id $schoologyCourseId during period ${period}."
+                    }
+                }
+                else {
+                    courseStudentsDirectory {
+                        this.courseData = propData.first
+                        this.studentData = propData.second
+                    }
                 }
             }
             else {
@@ -169,7 +142,6 @@ fun ChildrenBuilder.courseStudentsDirectoryRoute(client: HttpClient, scope: Coro
                         val studentsReqDataResponse = client.submitForm("$origin/api/course-students",
                                 parametersOf(
                                     "schoologyCourseId" to listOf(schoologyCourseId),
-                                    "day" to listOf(dayParam),
                                     "period" to listOf(periodParam)
                                 ),
                             true)
@@ -177,9 +149,11 @@ fun ChildrenBuilder.courseStudentsDirectoryRoute(client: HttpClient, scope: Coro
                             navigate("/")
                         }
 
-                        students = studentsReqDataResponse.body()
+                        data = studentsReqDataResponse.body()
                     }
-                    catch (ignored: Exception) {}
+                    catch (e: Exception) {
+                        e.printStackTrace()
+                    }
 
                     loaded = true
                 }

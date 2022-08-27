@@ -29,7 +29,7 @@ import react.router.dom.Link
 import react.router.useNavigate
 
 external interface StudentDirectoryProps : Props {
-    var students: Map<String, StudentData>
+    var students: Collection<StudentData>
 }
 
 private enum class FilterOrder {
@@ -60,20 +60,20 @@ val studentDirectory = FC<StudentDirectoryProps> { props ->
     var sortDescending by useState(false)
     var gradeFilter by useState<StudentType?>(null)
 
-    val studentsCopy = props.students.entries.toMutableList()
+    val studentsCopy = props.students.toMutableList()
 
     if (gradeFilter != null) {
         studentsCopy.removeAll {
-            it.value.studentType != gradeFilter
+            it.studentType != gradeFilter
         }
     }
 
     val sortedStudentsCopy = when (filterOrder) {
         FilterOrder.FIRST -> studentsCopy.sortedBy(sortDescending) {
-            it.value.firstName
+            it.firstName
         }
         FilterOrder.LAST -> studentsCopy.sortedBy(sortDescending) {
-            it.value.lastName
+            it.lastName
         }
         FilterOrder.ANY -> studentsCopy
     }.toMutableList()
@@ -81,17 +81,17 @@ val studentDirectory = FC<StudentDirectoryProps> { props ->
     when (filterOrder) {
         FilterOrder.FIRST -> {
             sortedStudentsCopy.removeAll {
-                !"${it.value.firstName} ${it.value.lastName}".lowercase().startsWith(prefix)
+                !"${it.firstName} ${it.lastName}".lowercase().startsWith(prefix)
             }
         }
         FilterOrder.LAST -> {
             sortedStudentsCopy.removeAll {
-                !it.value.lastName.lowercase().startsWith(prefix)
+                !it.lastName.lowercase().startsWith(prefix)
             }
         }
         FilterOrder.ANY -> {
             sortedStudentsCopy.removeAll {
-                prefix !in "${it.value.firstName} ${it.value.lastName}".lowercase()
+                prefix !in "${it.firstName} ${it.lastName}".lowercase()
             }
         }
     }
@@ -219,8 +219,8 @@ val studentDirectory = FC<StudentDirectoryProps> { props ->
             li {
                 Link {
                     className = ClassName("directory-link")
-                    to = "/student?id=${student.key}"
-                    +"${student.value.firstName} ${student.value.lastName}"
+                    to = "/student?id=${student.studentId}"
+                    +"${student.firstName} ${student.lastName}"
                 }
             }
         }
@@ -245,7 +245,7 @@ fun ChildrenBuilder.studentDirectoryRoute(client: HttpClient, scope: CoroutineSc
         element = FC<Props> {
             val navigate = useNavigate()
 
-            var students by useState(emptyMap<String, StudentData>())
+            var students by useState<Collection<StudentData>>(emptyList())
 
             studentDirectory {
                 this.students = students

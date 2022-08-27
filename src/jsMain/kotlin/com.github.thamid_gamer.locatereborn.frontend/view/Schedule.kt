@@ -3,8 +3,9 @@ package com.github.thamid_gamer.locatereborn.frontend.view
 import com.github.thamid_gamer.locatereborn.frontend.data.BasicCourseTypeColorizer
 import com.github.thamid_gamer.locatereborn.frontend.data.CourseTypeColorizer
 import com.github.thamid_gamer.locatereborn.frontend.helmet.helmet
-import com.github.thamid_gamer.locatereborn.shared.api.data.PeriodData
+import com.github.thamid_gamer.locatereborn.shared.api.data.CourseData
 import com.github.thamid_gamer.locatereborn.shared.api.data.StudentData
+import com.github.thamid_gamer.locatereborn.shared.api.data.StudentPeriodData
 import csstype.ClassName
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -37,7 +38,7 @@ import kotlin.math.max
 
 external interface ScheduleProps : Props {
     var studentData: StudentData
-    var courses: Iterable<PeriodData>
+    var courseData: Map<CourseData, Collection<StudentPeriodData>>
     var courseTypeColorizer: CourseTypeColorizer
 }
 
@@ -46,16 +47,19 @@ val schedule = FC<ScheduleProps> { props ->
     var hideLunch by useState(false)
     var hideStudyHalls by useState(false)
 
-    val periodMap = props.courses.groupBy {
-        it.period
-    }.mapValues {
-        it.value.associateBy { periodData ->
-            periodData.day
+    val periodMap = buildMap<Int, MutableMap<Int, CourseData>> {
+        for (course in props.courseData) {
+            for (period in course.value) {
+                getOrPut(period.period, ::mutableMapOf)[period.day] = course.key
+            }
         }
     }
-    val maxPeriod = max(props.courses.maxOfOrNull {
+    val maxPeriod = max(props.courseData.values.flatten().maxOfOrNull {
         it.period
     } ?: 10, 10)
+    val maxDay = max(props.courseData.values.flatten().maxOfOrNull {
+        it.day
+    } ?: 5, 5)
 
     helmet {
         title {
@@ -96,7 +100,7 @@ val schedule = FC<ScheduleProps> { props ->
                     th { +period.toString() }
 
                     val days = periodMap[period]
-                    for (day in 1..5) {
+                    for (day in 1..maxDay) {
                         val course = days?.get(day)
                         if ((course == null) ||
                             (hideLunch && "lunch" in course.simpleCourseName.lowercase()) ||
@@ -108,7 +112,7 @@ val schedule = FC<ScheduleProps> { props ->
                                 className = ClassName(props.courseTypeColorizer.colorize(course.courseType))
                                 Link {
                                     className = ClassName("directory-link")
-                                    to = course.getRoute()
+                                    to = course.getRoute(period)
                                     +course.simpleCourseName
                                 }
                             }
@@ -160,11 +164,8 @@ val schedule = FC<ScheduleProps> { props ->
     }
 }
 
-private fun PeriodData.getRoute() = "/course?" +
-        "schoologyCourseId=${schoologyCourseId}" +
-        "&fullCourseName=${fullCourseName}" +
-        "&simpleCourseName=${simpleCourseName}" +
-        "&day=${day}" +
+private fun CourseData.getRoute(period: Int) = "/course" +
+        "?schoologyCourseId=${schoologyCourseId}" +
         "&period=${period}"
 
 fun ChildrenBuilder.scheduleRoute(client: HttpClient,
@@ -177,8 +178,7 @@ fun ChildrenBuilder.scheduleRoute(client: HttpClient,
 
             val searchParams by useSearchParams()
             var loaded by useState(false)
-            var studentData by useState<StudentData>()
-            var courses by useState<Iterable<PeriodData>>()
+            var data by useState<Pair<StudentData, Map<CourseData, Collection<StudentPeriodData>>>>()
 
             val id = searchParams.get("id")
             if (id == null) {
@@ -190,18 +190,17 @@ fun ChildrenBuilder.scheduleRoute(client: HttpClient,
             }
 
             if (loaded) {
-                val propStudentData = studentData
-                val propCourses = courses
-                if (propStudentData == null || propCourses == null) {
+                val propData = data
+                if (propData == null) {
                     p {
                         className = ClassName("error-message")
-                        +"No student has id ${searchParams.get("id")}."
+                        +"No student has id $id."
                     }
                 }
                 else {
                     schedule {
-                        this.studentData = propStudentData
-                        this.courses = propCourses
+                        this.studentData = propData.first
+                        this.courseData = propData.second
                         this.courseTypeColorizer = courseTypeColorizer
                     }
                 }
@@ -217,28 +216,19 @@ fun ChildrenBuilder.scheduleRoute(client: HttpClient,
                     try {
                         val origin = window.location.origin
 
-                        val studentDataReqResponse = client.submitForm(
-                            "$origin/api/student",
-                            parametersOf("id" to listOf(id)),
-                            true)
-                        if (studentDataReqResponse.status == HttpStatusCode.Unauthorized) {
-                            navigate("/")
-                        }
-                        val studentDataReq = studentDataReqResponse.body<StudentData>()
-
-                        val coursesReqResponse = client.submitForm(
+                        val dataReqResponse = client.submitForm(
                             "$origin/api/student-courses",
                             parametersOf("id" to listOf(id)),
                             true)
-                        if (coursesReqResponse.status == HttpStatusCode.Unauthorized) {
+                        if (dataReqResponse.status == HttpStatusCode.Unauthorized) {
                             navigate("/")
                         }
-                        val coursesReq = coursesReqResponse.body<List<PeriodData>>()
 
-                        studentData = studentDataReq
-                        courses = coursesReq
+                        data = dataReqResponse.body()
                     }
-                    catch (ignored: Exception) {}
+                    catch (e: Exception) {
+                        e.printStackTrace()
+                    }
 
                     loaded = true
                 }
