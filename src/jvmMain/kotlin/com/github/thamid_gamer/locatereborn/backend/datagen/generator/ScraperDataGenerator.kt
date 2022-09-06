@@ -205,7 +205,7 @@ class ScraperDataGenerator(private val client: HttpClient,
                 }
 
                 if (day.value.length == 1) {
-                    add(StudentPeriodData(studentId, schoologyCourseId, period, startDayIndex))
+                    add(StudentPeriodData(studentId, schoologyCourseId, period, startDayIndex + 1))
                 } else if (day.value.length == 3) {
                     val endDayIndex = DAYS_RANGE.indexOf(day.value[2])
                     if (endDayIndex == -1) {

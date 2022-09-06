@@ -90,19 +90,17 @@ fun Route.studentCoursesRoute(db: Database) {
                 .innerJoin(Course)
                 .select((StudentPeriod.schoologyCourseId eq Course.schoologyCourseId) and
                         (StudentPeriod.studentId eq Student.studentId) and
-                        (StudentPeriod.schoologyCourseId eq Course.schoologyCourseId))
+                        (Student.studentId eq id))
                 .groupBy({ CourseData(it[Course.schoologyCourseId], it[Course.fullCourseName], it[Course.simpleCourseName], CourseType.courseTypeMap[it[Course.courseType]] ?: CourseType.UNKNOWN ) }) {
-                    StudentData(
+                    StudentPeriodData(
                         it[Student.studentId],
                         it[Student.firstName],
-                        it[Student.lastName],
-                        it[Student.isTeacher],
-                        StudentType.studentTypeMap[it[Student.studentType]] ?: StudentType.UNKNOWN,
-                        it[Student.roomNumber]
+                        it[StudentPeriod.period],
+                        it[StudentPeriod.day]
                     )
                 }
 
-            call.respond(Pair(studentResponse, periodResponse))
+            call.respond(Pair(student, periodResponse))
         }
     }
 }
@@ -184,6 +182,7 @@ fun Route.courseStudentsRoute(db: Database) {
                         it[Student.roomNumber]
                     )
                 }
+                .distinct()
 
             call.respond(Pair(courseResponse, studentResponse))
         }

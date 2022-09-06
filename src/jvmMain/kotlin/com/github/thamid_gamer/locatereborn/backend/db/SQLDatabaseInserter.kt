@@ -4,6 +4,7 @@ import com.github.thamid_gamer.locatereborn.backend.datagen.generator.DataGenera
 import com.github.thamid_gamer.locatereborn.backend.db.tables.Course
 import com.github.thamid_gamer.locatereborn.backend.db.tables.StudentPeriod
 import com.github.thamid_gamer.locatereborn.backend.db.tables.Student
+import com.github.thamid_gamer.locatereborn.backend.db.tables.User
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
@@ -14,6 +15,7 @@ class SQLDatabaseInserter(private val db: Database) : DatabaseInserter {
 
     override suspend fun updateData(dataGenerationResult: DataGenerationResult) {
         newSuspendedTransaction(Dispatchers.IO, db) {
+            SchemaUtils.create(User)
             SchemaUtils.drop(Student, StudentPeriod, Course)
             SchemaUtils.create(Student, StudentPeriod, Course)
 

@@ -1,6 +1,6 @@
 package com.github.thamid_gamer.locatereborn.backend.server
 
-import com.github.thamid_gamer.locatereborn.backend.datagen.classifier.LunchStudentTypeClassifier
+import com.github.thamid_gamer.locatereborn.backend.datagen.classifier.HistoryLunchStudentClassifier
 import com.github.thamid_gamer.locatereborn.backend.db.SQLDatabaseInserter
 import com.github.thamid_gamer.locatereborn.backend.datagen.generator.ScraperDataGenerator
 import com.github.thamid_gamer.locatereborn.backend.datagen.classifier.ManualCourseTypeClassifier
@@ -25,7 +25,6 @@ import io.ktor.server.html.*
 import io.ktor.server.http.content.*
 import io.ktor.server.plugins.callloging.*
 import io.ktor.server.plugins.contentnegotiation.*
-import io.ktor.server.plugins.httpsredirect.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
@@ -123,7 +122,7 @@ private suspend fun downloadData(databaseInserter: DatabaseInserter) {
         install(HttpRequestRetry)
     }
 
-    val dataGenerator = ScraperDataGenerator(client, LunchStudentTypeClassifier(), ManualCourseTypeClassifier())
+    val dataGenerator = ScraperDataGenerator(client, HistoryLunchStudentClassifier(), ManualCourseTypeClassifier())
     val username = System.getenv("SCHOOLOGY_USERNAME")
         ?: throw IllegalArgumentException("SCHOOLOGY_USERNAME environment variable undefined")
     val password = System.getenv("SCHOOLOGY_PASSWORD")
