@@ -4,8 +4,8 @@ import com.github.thamid_gamer.locatereborn.backend.datagen.classifier.CourseTyp
 import com.github.thamid_gamer.locatereborn.backend.datagen.classifier.StudentTypeClassifier
 import com.github.thamid_gamer.locatereborn.backend.datagen.exception.LocateDataGenerationException
 import com.github.thamid_gamer.locatereborn.shared.api.data.CourseData
+import com.github.thamid_gamer.locatereborn.shared.api.data.DayGroupData
 import com.github.thamid_gamer.locatereborn.shared.api.data.StudentData
-import com.github.thamid_gamer.locatereborn.shared.api.data.StudentPeriodData
 import io.ktor.client.*
 import io.ktor.client.plugins.*
 import io.ktor.client.request.*
@@ -39,8 +39,8 @@ class ScraperDataGenerator(private val client: HttpClient,
             throw LocateDataGenerationException("Login failed!")
         }
 
-        val studentMap = mutableMapOf<String, Pair<StudentData, Collection<StudentPeriodData>>>()
-        val courseMap = mutableMapOf<String, CourseData>()
+        val studentMap = mutableMapOf<String, Pair<StudentData, Collection<DayGroupData>>>()
+        val courseMap = mutableMapOf<String, Pair<CourseData, Collection<DayGroupData>>>()
 
         for (groupId in request.groups) {
             scrapeGroup(groupId, studentMap, courseMap)
@@ -88,8 +88,8 @@ class ScraperDataGenerator(private val client: HttpClient,
 
     private suspend fun scrapeGroup(
         groupId: String,
-        studentMap: MutableMap<String, Pair<StudentData, Collection<StudentPeriodData>>>,
-        courseMap: MutableMap<String, CourseData>
+        studentMap: MutableMap<String, Pair<StudentData, Collection<DayGroupData>>>,
+        courseMap: MutableMap<String, Pair<CourseData, Collection<DayGroupData>>>
     ) {
         val pageCount = getGroupPageCount(groupId) ?: return
 
@@ -126,8 +126,8 @@ class ScraperDataGenerator(private val client: HttpClient,
 
     private suspend fun scrapeStudentCourses(
         student: Element,
-        studentMap: MutableMap<String, Pair<StudentData, Collection<StudentPeriodData>>>,
-        courseMap: MutableMap<String, CourseData>
+        studentMap: MutableMap<String, Pair<StudentData, Collection<DayGroupData>>>,
+        courseMap: MutableMap<String, Pair<CourseData, Collection<DayGroupData>>>
     ) {
         val studentLink = student.child(1).child(0)
         val studentId = studentLink.attr("href").substring("/user/".length)
@@ -151,22 +151,28 @@ class ScraperDataGenerator(private val client: HttpClient,
 
 
         val createdCourses = mutableListOf<CourseData>()
-        val createdStudentPeriods = mutableListOf<StudentPeriodData>()
+        val createdDayGroupData = mutableListOf<DayGroupData>()
         for (course in courses) {
-            parseCourse(studentId, course)?.let {
-                courseMap.getOrPut(it.first.first) { it.first.second }
-                createdCourses.add(it.first.second)
-                createdStudentPeriods.addAll(it.second)
+            parseCourse(course)?.let {
+                val previousCourse = courseMap[it.first.schoologyCourseId]
+                if (previousCourse != null) {
+                    courseMap[it.first.schoologyCourseId] = Pair(previousCourse.first, previousCourse.second + it.second)
+                } else {
+                    courseMap[it.first.schoologyCourseId] = it
+                }
+
+                createdCourses.add(it.first)
+                createdDayGroupData.addAll(it.second)
             }
         }
 
         val studentType = studentTypeClassifier.classify(isTeacher, createdCourses)
-        studentMap[studentId] = Pair(StudentData(studentId, firstName, lastName, isTeacher, studentType, null), createdStudentPeriods)
+        studentMap[studentId] = Pair(StudentData(studentId, firstName, lastName, isTeacher, studentType, null), createdDayGroupData)
     }
 
     private fun getStudentCoursesURL(studentId: String) = "$BCA_HOST/user/$studentId/courses/list"
 
-    private fun parseCourse(studentId: String, course: Element): Pair<Pair<String, CourseData>, Collection<StudentPeriodData>>? {
+    private fun parseCourse(course: Element): Pair<CourseData, Collection<DayGroupData>>? {
         val courseLink = course.child(0).child(1).child(0)
         val schoologyCourseId = courseLink.attr("href").substring("/course/".length)
         val fullCourseName = courseLink.ownText()
@@ -181,23 +187,27 @@ class ScraperDataGenerator(private val client: HttpClient,
         val timesComponent = nameComponents.groupValues[2].replace(" ", "")
 
         val times = Regex("(\\d+)\\(((?:[A-E](?:-[A-E])?)(?:,(?:[A-E](?:-[A-E])?))*)\\)").findAll(timesComponent)
-        return Pair(Pair(schoologyCourseId, CourseData(schoologyCourseId, fullCourseName, simpleCourseName, courseType)), buildList {
+        val dayGroups = buildList {
             for (time in times) {
-                addAll(createPeriods(studentId, schoologyCourseId, time))
+                parseDays(schoologyCourseId, time)?.let {
+                    add(it)
+                }
             }
-        })
-    }
-
-    private fun createPeriods(studentId: String, schoologyCourseId: String, time: MatchResult): Collection<StudentPeriodData> {
-        if (time.groups.size != 3) {
-            return emptyList()
         }
 
-        val period = time.groupValues[1].toIntOrNull() ?: return emptyList()
+        return Pair(CourseData(schoologyCourseId, fullCourseName, simpleCourseName, courseType), dayGroups)
+    }
+
+    private fun parseDays(schoologyCourseId: String, time: MatchResult): DayGroupData? {
+        if (time.groups.size != 3) {
+            return null
+        }
+
+        val period = time.groupValues[1].toIntOrNull() ?: return null
         val daysData = time.groupValues[2]
 
         val days = Regex("(?:[A-E](?:-[A-E])?)").findAll(daysData)
-        return buildList {
+        return DayGroupData(schoologyCourseId, period, buildList {
             for (day in days) {
                 val startDayIndex = DAYS_RANGE.indexOf(day.value[0])
                 if (startDayIndex == -1) {
@@ -205,7 +215,7 @@ class ScraperDataGenerator(private val client: HttpClient,
                 }
 
                 if (day.value.length == 1) {
-                    add(StudentPeriodData(studentId, schoologyCourseId, period, startDayIndex + 1))
+                    add(startDayIndex)
                 } else if (day.value.length == 3) {
                     val endDayIndex = DAYS_RANGE.indexOf(day.value[2])
                     if (endDayIndex == -1) {
@@ -213,18 +223,18 @@ class ScraperDataGenerator(private val client: HttpClient,
                     }
 
                     val range = if (startDayIndex <= endDayIndex) {
-                        (startDayIndex + 1)..(endDayIndex + 1)
+                        startDayIndex..endDayIndex
                     }
                     else {
-                        (endDayIndex + 1) downTo (startDayIndex + 1)
+                        endDayIndex downTo startDayIndex
                     }
 
                     for (dayIndex in range) {
-                        add(StudentPeriodData(studentId, schoologyCourseId, period, dayIndex))
+                        add(dayIndex)
                     }
                 }
             }
-        }
+        })
     }
 
 }

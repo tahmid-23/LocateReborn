@@ -1,6 +1,7 @@
 package com.github.thamid_gamer.locatereborn.frontend.view
 
 import com.github.thamid_gamer.locatereborn.frontend.helmet.helmet
+import com.github.thamid_gamer.locatereborn.frontend.util.sortedBy
 import com.github.thamid_gamer.locatereborn.frontend.view.FilterOrder.Companion.defaultOrder
 import com.github.thamid_gamer.locatereborn.shared.api.data.StudentData
 import com.github.thamid_gamer.locatereborn.shared.api.data.StudentType
@@ -72,9 +73,11 @@ val studentDirectory = FC<StudentDirectoryProps> { props ->
         FilterOrder.FIRST -> studentsCopy.sortedBy(sortDescending) {
             it.firstName
         }
+
         FilterOrder.LAST -> studentsCopy.sortedBy(sortDescending) {
             it.lastName
         }
+
         FilterOrder.ANY -> studentsCopy
     }.toMutableList()
 
@@ -84,11 +87,13 @@ val studentDirectory = FC<StudentDirectoryProps> { props ->
                 !"${it.firstName} ${it.lastName}".lowercase().startsWith(prefix)
             }
         }
+
         FilterOrder.LAST -> {
             sortedStudentsCopy.removeAll {
                 !it.lastName.lowercase().startsWith(prefix)
             }
         }
+
         FilterOrder.ANY -> {
             sortedStudentsCopy.removeAll {
                 prefix !in "${it.firstName} ${it.lastName}".lowercase()
@@ -110,6 +115,11 @@ val studentDirectory = FC<StudentDirectoryProps> { props ->
     }
     h1 {
         +"Students and Teachers"
+    }
+    Link {
+        className = ClassName("visible-link")
+        to = "/courses"
+        +"Go to Courses"
     }
     span {
         className = ClassName("aligned-row horizontally-spaced-row")
@@ -224,18 +234,6 @@ val studentDirectory = FC<StudentDirectoryProps> { props ->
                 }
             }
         }
-    }
-}
-
-private inline fun <T, R : Comparable<R>> Iterable<T>.sortedBy(
-    descending: Boolean,
-    crossinline selector: (T) -> R?
-): List<T> {
-    return if (descending) {
-        sortedByDescending(selector)
-    }
-    else {
-        sortedBy(selector)
     }
 }
 

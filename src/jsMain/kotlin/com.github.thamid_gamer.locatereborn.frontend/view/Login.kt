@@ -90,6 +90,9 @@ fun ChildrenBuilder.loginRoute() {
                         }
                     }
                 }
+                p {
+                    +"Where's Wang?"
+                }
             }
 
             useEffectOnce {

@@ -87,28 +87,20 @@ fun ChildrenBuilder.courseStudentsDirectoryRoute(client: HttpClient, scope: Coro
             var loaded by useState(false)
             var data by useState<Pair<CourseData, Collection<StudentData>>>()
 
-            val schoologyCourseId = searchParams.get("schoologyCourseId")
-            if (schoologyCourseId == null) {
+            val groupIdParam = searchParams.get("groupId")
+            if (groupIdParam == null) {
                 p {
                     className = ClassName("error-message")
-                    +"No schoologyCourseId query parameter set."
+                    +"No groupId query parameter set."
                 }
                 return@FC
             }
 
-            val periodParam = searchParams.get("period")
-            if (periodParam == null) {
+            val groupId = groupIdParam.toIntOrNull()
+            if (groupId == null) {
                 p {
                     className = ClassName("error-message")
-                    +"No periodParam query parameter set."
-                }
-                return@FC
-            }
-            val period = periodParam.toIntOrNull()
-            if (period == null) {
-                p {
-                    className = ClassName("error-message")
-                    +"period query parameter is not an integer."
+                    +"groupId query parameter must be an integer."
                 }
                 return@FC
             }
@@ -118,7 +110,7 @@ fun ChildrenBuilder.courseStudentsDirectoryRoute(client: HttpClient, scope: Coro
                 if (propData == null) {
                     p {
                         className = ClassName("error-message")
-                        +"No course has id $schoologyCourseId during period ${period}."
+                        +"No course has group id $groupId."
                     }
                 }
                 else {
@@ -141,8 +133,7 @@ fun ChildrenBuilder.courseStudentsDirectoryRoute(client: HttpClient, scope: Coro
 
                         val studentsReqDataResponse = client.submitForm("$origin/api/course-students",
                                 parametersOf(
-                                    "schoologyCourseId" to listOf(schoologyCourseId),
-                                    "period" to listOf(periodParam)
+                                    "groupId" to listOf(groupIdParam)
                                 ),
                             true)
                         if (studentsReqDataResponse.status == HttpStatusCode.Unauthorized) {

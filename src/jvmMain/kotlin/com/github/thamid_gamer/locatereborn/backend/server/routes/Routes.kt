@@ -1,8 +1,6 @@
 package com.github.thamid_gamer.locatereborn.backend.server.routes
 
-import com.github.thamid_gamer.locatereborn.backend.db.tables.Course
-import com.github.thamid_gamer.locatereborn.backend.db.tables.StudentPeriod
-import com.github.thamid_gamer.locatereborn.backend.db.tables.Student
+import com.github.thamid_gamer.locatereborn.backend.db.tables.*
 import com.github.thamid_gamer.locatereborn.backend.server.session.LocateSession
 import com.github.thamid_gamer.locatereborn.shared.api.data.*
 import io.ktor.http.*
@@ -11,11 +9,8 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 import kotlinx.coroutines.Dispatchers
-import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 
 fun Route.studentListRoute(db: Database) {
@@ -85,22 +80,34 @@ fun Route.studentCoursesRoute(db: Database) {
                 return@newSuspendedTransaction
             }
 
-            val periodResponse = StudentPeriod
-                .innerJoin(Student)
-                .innerJoin(Course)
-                .select((StudentPeriod.schoologyCourseId eq Course.schoologyCourseId) and
-                        (StudentPeriod.studentId eq Student.studentId) and
-                        (Student.studentId eq id))
-                .groupBy({ CourseData(it[Course.schoologyCourseId], it[Course.fullCourseName], it[Course.simpleCourseName], CourseType.courseTypeMap[it[Course.courseType]] ?: CourseType.UNKNOWN ) }) {
-                    StudentPeriodData(
-                        it[Student.studentId],
-                        it[Student.firstName],
-                        it[StudentPeriod.period],
-                        it[StudentPeriod.day]
+            val courseResponse = DayGroupStudent
+                .join(DayGroup, JoinType.INNER) {
+                    DayGroupStudent.groupId eq DayGroup.groupId
+                }
+                .join(Student, JoinType.INNER) {
+                    DayGroupStudent.studentId eq Student.studentId
+                }
+                .join(Course, JoinType.INNER) {
+                    DayGroup.schoologyCourseId eq Course.schoologyCourseId
+                }
+                .select(Student.studentId eq id)
+                .map {
+                    val courseData = CourseData(
+                        it[Course.schoologyCourseId],
+                        it[Course.fullCourseName],
+                        it[Course.simpleCourseName],
+                        CourseType.courseTypeMap[it[Course.courseType]] ?: CourseType.UNKNOWN,
                     )
+                    val dayGroupData = DayGroupData(it[Course.schoologyCourseId], it[DayGroup.period],
+                        Day.join(DayGroup, JoinType.INNER) {
+                            Day.groupId eq DayGroup.groupId
+                        }.select(DayGroup.groupId eq it[DayGroupStudent.groupId]).map { row ->
+                        row[Day.day]
+                    })
+                    Pair(courseData, Pair(it[DayGroupStudent.groupId], dayGroupData))
                 }
 
-            call.respond(Pair(student, periodResponse))
+            call.respond(Pair(student, courseResponse))
         }
     }
 }
@@ -115,16 +122,29 @@ fun Route.courseListRoute(db: Database) {
         }
 
         newSuspendedTransaction(Dispatchers.IO, db) {
-            val response = Course
-                .selectAll()
-                .map {
-                    CourseData(
-                        it[Course.schoologyCourseId],
-                        it[Course.fullCourseName],
-                        it[Course.simpleCourseName],
-                        CourseType.courseTypeMap[it[Course.courseType]] ?: CourseType.UNKNOWN
-                    )
+            val dayGroupDataMap = Day.join(DayGroup, JoinType.INNER) {
+                Day.groupId eq DayGroup.groupId
+            }.selectAll().groupBy({ it[Day.groupId] }) { it[Day.day] }
+            
+            val response = DayGroup.join(Course, JoinType.INNER) {
+                DayGroup.schoologyCourseId eq Course.schoologyCourseId
+            }.selectAll().groupBy({ CourseData(
+                it[Course.schoologyCourseId],
+                it[Course.fullCourseName],
+                it[Course.simpleCourseName],
+                CourseType.courseTypeMap[it[Course.courseType]] ?: CourseType.UNKNOWN
+            ) }) {
+                it[DayGroup.groupId]
+            }.mapValues {
+                buildList {
+                    for (groupId in it.value) {
+                        val dayGroupData = dayGroupDataMap[groupId]
+                        if (dayGroupData != null) {
+                            add(Pair(groupId, DayGroupData(it.key.schoologyCourseId, groupId, dayGroupData)))
+                        }
+                    }
                 }
+            }
 
             call.respond(response)
         }
@@ -140,17 +160,19 @@ fun Route.courseStudentsRoute(db: Database) {
             return@get
         }
 
-        val schoologyCourseId = call.request.queryParameters["schoologyCourseId"]
-        val period = call.request.queryParameters["period"]?.toIntOrNull()
+        val groupId = call.request.queryParameters["groupId"]?.toIntOrNull()
 
-        if (schoologyCourseId == null || period == null) {
+        if (groupId == null) {
             call.respond(HttpStatusCode.BadRequest)
             return@get
         }
 
         newSuspendedTransaction(Dispatchers.IO, db) {
-            val courseResponse = Course
-                .select(Course.schoologyCourseId eq schoologyCourseId)
+            val courseResponse = DayGroup
+                .join(Course, JoinType.INNER) {
+                    DayGroup.schoologyCourseId eq Course.schoologyCourseId
+                }
+                .select(DayGroup.groupId eq groupId)
                 .map {
                     CourseData(
                         it[Course.schoologyCourseId],
@@ -165,13 +187,11 @@ fun Route.courseStudentsRoute(db: Database) {
                 return@newSuspendedTransaction
             }
 
-            val studentResponse = StudentPeriod
-                .innerJoin(Student)
-                .innerJoin(Course)
-                .select((StudentPeriod.schoologyCourseId eq schoologyCourseId) and
-                        (StudentPeriod.period eq period) and
-                        (StudentPeriod.studentId eq Student.studentId) and
-                        (StudentPeriod.schoologyCourseId eq Course.schoologyCourseId))
+            val studentResponse = DayGroupStudent
+                .join(Student, JoinType.INNER) {
+                    DayGroupStudent.studentId eq Student.studentId
+                }
+                .select((DayGroupStudent.groupId eq groupId))
                 .map {
                     StudentData(
                         it[Student.studentId],

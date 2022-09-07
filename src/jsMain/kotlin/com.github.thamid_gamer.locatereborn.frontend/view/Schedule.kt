@@ -4,13 +4,12 @@ import com.github.thamid_gamer.locatereborn.frontend.data.BasicCourseTypeColoriz
 import com.github.thamid_gamer.locatereborn.frontend.data.CourseTypeColorizer
 import com.github.thamid_gamer.locatereborn.frontend.helmet.helmet
 import com.github.thamid_gamer.locatereborn.shared.api.data.CourseData
+import com.github.thamid_gamer.locatereborn.shared.api.data.DayGroupData
 import com.github.thamid_gamer.locatereborn.shared.api.data.StudentData
-import com.github.thamid_gamer.locatereborn.shared.api.data.StudentPeriodData
 import csstype.ClassName
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.forms.*
-import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.browser.window
 import kotlinx.coroutines.CoroutineScope
@@ -35,11 +34,11 @@ import react.router.Route
 import react.router.dom.Link
 import react.router.dom.useSearchParams
 import react.router.useNavigate
-import kotlin.math.max
 
 external interface ScheduleProps : Props {
     var studentData: StudentData
-    var courseData: Map<CourseData, Collection<StudentPeriodData>>
+    // Pair<GroupID, DayGroupData>
+    var courseData: Collection<Pair<CourseData, Pair<Int, DayGroupData>>>
     var courseTypeColorizer: CourseTypeColorizer
 }
 
@@ -48,19 +47,21 @@ val schedule = FC<ScheduleProps> { props ->
     var hideLunch by useState(false)
     var hideStudyHalls by useState(false)
 
-    val periodMap = buildMap<Int, MutableMap<Int, CourseData>> {
+    val periodMap = buildMap<Int, MutableMap<Int, Pair<Int, CourseData>>> {
         for (course in props.courseData) {
-            for (period in course.value) {
-                getOrPut(period.period, ::mutableMapOf)[period.day] = course.key
+            val dayMap = getOrPut(course.second.second.period, ::mutableMapOf)
+            for (day in course.second.second.days) {
+                dayMap[day] = Pair(course.second.first, course.first)
             }
         }
     }
-    val maxPeriod = max(props.courseData.values.flatten().maxOfOrNull {
-        it.period
-    } ?: 10, 10)
-    val maxDay = max(props.courseData.values.flatten().maxOfOrNull {
-        it.day
-    } ?: 5, 5)
+
+    val maxPeriod = props.courseData.maxOfOrNull {
+        it.second.second.period
+    } ?: 12
+    val maxDay = props.courseData.maxOfOrNull {
+        it.second.second.days.maxByOrNull { day -> day } ?: 5
+    } ?: 5
 
     helmet {
         title {
@@ -101,20 +102,20 @@ val schedule = FC<ScheduleProps> { props ->
                     th { +period.toString() }
 
                     val days = periodMap[period]
-                    for (day in 1..maxDay) {
+                    for (day in 0..maxDay) {
                         val course = days?.get(day)
                         if ((course == null) ||
-                            (hideLunch && "lunch" in course.simpleCourseName.lowercase()) ||
-                            (hideStudyHalls && "study hall" in course.simpleCourseName.lowercase())) {
+                            (hideLunch && "lunch" in course.second.simpleCourseName.lowercase()) ||
+                            (hideStudyHalls && "study hall" in course.second.simpleCourseName.lowercase())) {
                             td {}
                         }
                         else {
                             td {
-                                className = ClassName(props.courseTypeColorizer.colorize(course.courseType))
+                                className = ClassName(props.courseTypeColorizer.colorize(course.second.courseType))
                                 Link {
                                     className = ClassName("directory-link")
-                                    to = course.getRoute(period)
-                                    +course.simpleCourseName
+                                    to = getRoute(course.first)
+                                    +course.second.simpleCourseName
                                 }
                             }
                         }
@@ -165,9 +166,7 @@ val schedule = FC<ScheduleProps> { props ->
     }
 }
 
-private fun CourseData.getRoute(period: Int) = "/course" +
-        "?schoologyCourseId=${schoologyCourseId}" +
-        "&period=${period}"
+private fun getRoute(groupId: Int) = "/course?groupId=${groupId}"
 
 fun ChildrenBuilder.scheduleRoute(client: HttpClient,
                                   scope: CoroutineScope,
@@ -179,7 +178,7 @@ fun ChildrenBuilder.scheduleRoute(client: HttpClient,
 
             val searchParams by useSearchParams()
             var loaded by useState(false)
-            var data by useState<Pair<StudentData, Map<CourseData, Collection<StudentPeriodData>>>>()
+            var data by useState<Pair<StudentData, Collection<Pair<CourseData, Pair<Int, DayGroupData>>>>>()
 
             val id = searchParams.get("id")
             if (id == null) {
@@ -200,8 +199,8 @@ fun ChildrenBuilder.scheduleRoute(client: HttpClient,
                 }
                 else {
                     schedule {
-                        this.studentData = propData.first
-                        this.courseData = propData.second
+                        studentData = propData.first
+                        courseData = propData.second
                         this.courseTypeColorizer = courseTypeColorizer
                     }
                 }
