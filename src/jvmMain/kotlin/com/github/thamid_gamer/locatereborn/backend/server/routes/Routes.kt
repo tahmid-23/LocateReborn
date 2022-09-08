@@ -122,9 +122,16 @@ fun Route.courseListRoute(db: Database) {
         }
 
         newSuspendedTransaction(Dispatchers.IO, db) {
-            val dayGroupDataMap = Day.join(DayGroup, JoinType.INNER) {
+            val dayResult = Day.join(DayGroup, JoinType.INNER) {
                 Day.groupId eq DayGroup.groupId
-            }.selectAll().groupBy({ it[Day.groupId] }) { it[Day.day] }
+            }.selectAll()
+            val dayMap = buildMap<Int, Pair<Int, MutableCollection<Int>>> {
+                for (row in dayResult) {
+                    getOrPut(row[DayGroup.period]) {
+                        Pair(row[DayGroup.period], mutableListOf())
+                    }.second.add(row[Day.day])
+                }
+            }
             
             val response = DayGroup.join(Course, JoinType.INNER) {
                 DayGroup.schoologyCourseId eq Course.schoologyCourseId
@@ -138,9 +145,9 @@ fun Route.courseListRoute(db: Database) {
             }.mapValues {
                 buildList {
                     for (groupId in it.value) {
-                        val dayGroupData = dayGroupDataMap[groupId]
-                        if (dayGroupData != null) {
-                            add(Pair(groupId, DayGroupData(it.key.schoologyCourseId, groupId, dayGroupData)))
+                        val dayInfo = dayMap[groupId]
+                        if (dayInfo != null) {
+                            add(Pair(groupId, DayGroupData(it.key.schoologyCourseId, dayInfo.first, dayInfo.second)))
                         }
                     }
                 }
