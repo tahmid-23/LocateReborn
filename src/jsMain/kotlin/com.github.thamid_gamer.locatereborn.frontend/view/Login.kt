@@ -90,8 +90,12 @@ fun ChildrenBuilder.loginRoute() {
                         }
                     }
                 }
-                p {
-                    +"Where's Wang?"
+                div {
+                    className = ClassName("centered-section")
+                    p {
+                        className = ClassName("splash")
+                        +"Where's Wang?"
+                    }
                 }
             }
 

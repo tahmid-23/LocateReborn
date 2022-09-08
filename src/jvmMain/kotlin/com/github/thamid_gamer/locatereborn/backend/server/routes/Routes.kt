@@ -127,7 +127,7 @@ fun Route.courseListRoute(db: Database) {
             }.selectAll()
             val dayMap = buildMap<Int, Pair<Int, MutableCollection<Int>>> {
                 for (row in dayResult) {
-                    getOrPut(row[DayGroup.period]) {
+                    getOrPut(row[DayGroup.groupId]) {
                         Pair(row[DayGroup.period], mutableListOf())
                     }.second.add(row[Day.day])
                 }
